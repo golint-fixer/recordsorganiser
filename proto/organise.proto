@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package proto;
+
+import "github.com/brotherlogic/godiscogs/godiscogs.proto";
+
+message Empty {}
+
+message ReleasePlacement {
+        // The id of the release
+        int32 release_id = 1;
+
+        // The index in the folder
+        int32 index = 2;
+}
+
+message Location {
+        // The name of the location
+        string name = 1;
+
+        // The number of units within the location
+        int32 units = 2;
+
+        // The folder ids that are stored in this location
+        repeated int32 folder_ids = 3;
+
+        // The placement of releases in the folder
+        repeated ReleasePlacement releases_location = 4;
+
+        // The means by which the folder is sorted
+        enum Sorting {
+             BY_LABEL_CATNO = 0;
+        }
+        Sorting sort = 5;
+}
+
+message Organisation {
+        // Timestamp this organisation was made
+        int64 timestamp = 1;
+
+        // The locations in this sorting
+        repeated Location locations = 2;
+}
+
+message LocationMove {
+        string location_name = 1;
+        ReleasePlacement old = 2;
+        ReleasePlacement new = 3;
+}
+
+message OrganisationMoves {
+        int64 start_timestamp = 1;
+        int64 end_timestamp = 2;
+        repeated LocationMove moves = 3;
+}
+
+service OrganiserService {
+        rpc Organise (Empty) returns (OrganisationMoves) {};
+        rpc Locate (godiscogs.Release) returns (Location) {};
+        rpc AddLocation (Location) returns (Location) {};
+        rpc GetLocation (Location) returns (Location) {};
+}
