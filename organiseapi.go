@@ -29,7 +29,7 @@ func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
 		list.Folders = append(list.Folders, &pbd.Folder{Id: id})
 	}
 
-	ip, port := getIP("discogsyncer", "10.0.1.17", 50055)
+	ip, port := getIP("discogssyncer", "10.0.1.17", 50055)
 	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 	defer conn.Close()
 	client := pbs.NewDiscogsServiceClient(conn)
