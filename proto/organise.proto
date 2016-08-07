@@ -61,5 +61,5 @@ service OrganiserService {
         //rpc Organise (Empty) returns (OrganisationMoves) {};
         //rpc Locate (godiscogs.Release) returns (Location) {};
         rpc AddLocation (Location) returns (Location) {};
-        //rpc GetLocation (Location) returns (Location) {};
+        rpc GetLocation (Location) returns (Location) {};
 }
