@@ -24,7 +24,7 @@ func getIP(servername string, ip string, port int) (string, int) {
 	return r.Ip, int(r.Port)
 }
 
-func main() {
+func test() {
 	var host = flag.String("host", "10.0.1.17", "Hostname of server.")
 	var port = flag.String("port", "50055", "Port number of server")
 	flag.Parse()
@@ -41,11 +41,14 @@ func main() {
 	releases, err := dClient.GetReleasesInFolder(context.Background(), list)
 
 	if err != nil {
-		log.Fatal("%v", err)
+		log.Fatal(err)
 	}
 
-	sort.Sort(ByLabelCat(releases.Releases))
-	log.Printf("1. %v", releases.Releases[0].Title)
-	log.Printf("2. %v", releases.Releases[1].Title)
-	log.Printf("3. %v", releases.Releases[2].Title)
+	sort.Sort(pbd.ByLabelCat(releases.Releases))
+	splits := pbd.Split(releases.Releases, 8)
+	count := 1
+	for _, split := range splits[0] {
+		log.Printf("%v - %v", count, split.Title)
+		count++
+	}
 }
