@@ -2,15 +2,20 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
+	"os"
 	"sort"
 	"strconv"
+	"strings"
+	"time"
 
 	"golang.org/x/net/context"
 
 	"google.golang.org/grpc"
 
 	"github.com/brotherlogic/goserver"
+	"github.com/golang/protobuf/proto"
 
 	pbs "github.com/brotherlogic/discogssyncer/server"
 	pbdi "github.com/brotherlogic/discovery/proto"
@@ -45,10 +50,51 @@ func (s Server) DoRegister(server *grpc.Server) {
 	pb.RegisterOrganiserServiceServer(server, &s)
 }
 
+func (s Server) save() {
+	if _, err := os.Stat(s.saveLocation); os.IsNotExist(err) {
+		os.MkdirAll(s.saveLocation, 0777)
+	}
+
+	data, _ := proto.Marshal(s.org)
+	ioutil.WriteFile(s.saveLocation+"/"+strconv.Itoa(int(time.Now().Unix()))+".data", data, 0644)
+}
+
+func loadLatest(folder string) *pb.Organisation {
+	org := &pb.Organisation{}
+
+	bestNum := 0
+	files, err := ioutil.ReadDir(folder)
+
+	if err != nil {
+		log.Printf("Error: %v", err)
+	}
+
+	for _, file := range files {
+		start := strings.Split(file.Name(), ".")
+		num, err := strconv.Atoi(start[0])
+		if err != nil {
+			log.Printf("Failed on %v", file.Name())
+		} else {
+			if num > bestNum {
+				bestNum = num
+			}
+		}
+	}
+
+	if bestNum > 0 {
+		data, _ := ioutil.ReadFile(folder + "/" + strconv.Itoa(bestNum) + ".data")
+		proto.Unmarshal(data, org)
+	}
+
+	return org
+}
+
 // InitServer builds an initial server
 func InitServer(folder *string) Server {
-	server := Server{&goserver.GoServer{}, *folder, prodBridge{}}
+	server := Server{&goserver.GoServer{}, *folder, prodBridge{}, &pb.Organisation{}}
 	server.Register = server
+	server.org = loadLatest(*folder)
+
 	return server
 }
 

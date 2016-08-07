@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"sort"
 
 	"github.com/brotherlogic/goserver"
@@ -15,10 +16,22 @@ type Server struct {
 	*goserver.GoServer
 	saveLocation string
 	bridge       discogsBridge
+	org          *pb.Organisation
 }
 
 type discogsBridge interface {
 	getReleases(folders []int32) []*pbd.Release
+}
+
+// GetLocation Gets an existing location
+func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Location, error) {
+	for _, storedLocation := range s.org.GetLocations() {
+		if storedLocation.Name == location.Name {
+			return storedLocation, nil
+		}
+	}
+
+	return &pb.Location{}, errors.New("Cannot find location called " + location.Name)
 }
 
 // AddLocation Adds a new location to the organiser
@@ -41,5 +54,9 @@ func (s *Server) AddLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 	}
 
 	location.ReleasesLocation = locations
+
+	s.org.Locations = append(s.org.Locations, location)
+	s.save()
+
 	return location, nil
 }
