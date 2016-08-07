@@ -97,6 +97,6 @@ func main() {
 	server := InitServer(folder)
 
 	server.PrepServer()
-	server.RegisterServer("recordorganizer", false)
+	server.RegisterServer("recordsorganiser", false)
 	server.Serve()
 }
