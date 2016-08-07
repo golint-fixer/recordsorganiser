@@ -1,54 +1,45 @@
 package main
 
 import (
-	"flag"
-	"log"
 	"sort"
-	"strconv"
 
+	"github.com/brotherlogic/goserver"
 	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 
-	pb "github.com/brotherlogic/discogssyncer/server"
-	pbdi "github.com/brotherlogic/discovery/proto"
 	pbd "github.com/brotherlogic/godiscogs"
+	pb "github.com/brotherlogic/recordsorganiser/proto"
 )
 
-func getIP(servername string, ip string, port int) (string, int) {
-	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
-	defer conn.Close()
-
-	registry := pbdi.NewDiscoveryServiceClient(conn)
-	entry := pbdi.RegistryEntry{Name: servername}
-	r, _ := registry.Discover(context.Background(), &entry)
-	return r.Ip, int(r.Port)
+// Server the configuration for the syncer
+type Server struct {
+	*goserver.GoServer
+	saveLocation string
+	bridge       discogsBridge
 }
 
-func test() {
-	var host = flag.String("host", "10.0.1.17", "Hostname of server.")
-	var port = flag.String("port", "50055", "Port number of server")
-	flag.Parse()
-	portVal, _ := strconv.Atoi(*port)
-	dServer, dPort := getIP("discogssyncer", *host, portVal)
+type discogsBridge interface {
+	getReleases(folders []int32) []*pbd.Release
+}
 
-	dConn, _ := grpc.Dial(dServer+":"+strconv.Itoa(dPort), grpc.WithInsecure())
-	defer dConn.Close()
-	dClient := pb.NewDiscogsServiceClient(dConn)
+// AddLocation Adds a new location to the organiser
+func (s *Server) AddLocation(ctx context.Context, location *pb.Location) (*pb.Location, error) {
+	var locations []*pb.ReleasePlacement
+	releases := s.bridge.getReleases(location.FolderIds)
 
-	list := &pb.FolderList{}
-	list.Folders = append(list.Folders, &pbd.Folder{Name: "12s"})
+	sort.Sort(pbd.ByLabelCat(releases))
+	splits := pbd.Split(releases, float64(location.Units))
 
-	releases, err := dClient.GetReleasesInFolder(context.Background(), list)
-
-	if err != nil {
-		log.Fatal(err)
+	for i, split := range splits {
+		for j, rel := range split {
+			place := &pb.ReleasePlacement{
+				ReleaseId: rel.Id,
+				Index:     int32(j) + 1,
+				Slot:      int32(i) + 1,
+			}
+			locations = append(locations, place)
+		}
 	}
 
-	sort.Sort(pbd.ByLabelCat(releases.Releases))
-	splits := pbd.Split(releases.Releases, 8)
-	count := 1
-	for _, split := range splits[0] {
-		log.Printf("%v - %v", count, split.Title)
-		count++
-	}
+	location.ReleasesLocation = locations
+	return location, nil
 }

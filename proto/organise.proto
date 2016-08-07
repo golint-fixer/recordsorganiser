@@ -12,6 +12,9 @@ message ReleasePlacement {
 
         // The index in the folder
         int32 index = 2;
+
+        // The slot in the folder
+        int32 slot = 3;
 }
 
 message Location {
@@ -57,6 +60,6 @@ message OrganisationMoves {
 service OrganiserService {
         //rpc Organise (Empty) returns (OrganisationMoves) {};
         //rpc Locate (godiscogs.Release) returns (Location) {};
-        //rpc AddLocation (Location) returns (Location) {};
+        rpc AddLocation (Location) returns (Location) {};
         //rpc GetLocation (Location) returns (Location) {};
 }
