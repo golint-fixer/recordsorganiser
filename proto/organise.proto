@@ -46,9 +46,8 @@ message Organisation {
 }
 
 message LocationMove {
-        string location_name = 1;
-        ReleasePlacement old = 2;
-        ReleasePlacement new = 3;
+        ReleasePlacement old = 1;
+        ReleasePlacement new = 2;
 }
 
 message OrganisationMoves {

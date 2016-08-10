@@ -2,8 +2,10 @@ package main
 
 import (
 	"errors"
+	"log"
 	"sort"
 
+	"github.com/brotherlogic/diffmove"
 	"github.com/brotherlogic/goserver"
 	"golang.org/x/net/context"
 
@@ -21,6 +23,43 @@ type Server struct {
 
 type discogsBridge interface {
 	getReleases(folders []int32) []*pbd.Release
+}
+
+func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement) []*pb.LocationMove {
+	var moves []*pb.LocationMove
+
+	//Build out the arrays for diffmove
+	startNumbers := make([]int, len(start))
+	endNumbers := make([]int, len(end))
+	for _, startRec := range start {
+		startNumbers[startRec.Index-1] = int(startRec.ReleaseId)
+	}
+	for _, endRec := range end {
+		endNumbers[endRec.Index-1] = int(endRec.ReleaseId)
+	}
+	log.Printf("DIFFING %v -> %v", startNumbers, endNumbers)
+	diffMoves := diffmove.Diff(startNumbers, endNumbers)
+	log.Printf("RES: %v", diffMoves)
+	for _, move := range diffMoves {
+		switch move.Move {
+		case "Add":
+			moves = append(moves, &pb.LocationMove{
+				New: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1)},
+			})
+		case "Delete":
+			moves = append(moves, &pb.LocationMove{
+				Old: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1)},
+			})
+			log.Printf("WHAT = %v from %v", moves, move)
+		case "Move":
+			moves = append(moves, &pb.LocationMove{
+				Old: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1)},
+				New: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.End + 1)},
+			})
+		}
+	}
+
+	return moves
 }
 
 // GetLocation Gets an existing location

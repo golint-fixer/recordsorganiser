@@ -7,6 +7,7 @@ import (
 
 	pbd "github.com/brotherlogic/godiscogs"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 type testBridge struct{}
@@ -28,6 +29,34 @@ func (discogsBridge testBridge) getReleases(folders []int32) []*pbd.Release {
 	})
 
 	return result
+}
+
+func TestCompareMoves(t *testing.T) {
+	start := []*pb.ReleasePlacement{
+		&pb.ReleasePlacement{ReleaseId: 1, Index: 1},
+		&pb.ReleasePlacement{ReleaseId: 2, Index: 2},
+		&pb.ReleasePlacement{ReleaseId: 3, Index: 3},
+	}
+	end := []*pb.ReleasePlacement{
+		&pb.ReleasePlacement{ReleaseId: 1, Index: 2},
+		&pb.ReleasePlacement{ReleaseId: 2, Index: 1},
+		&pb.ReleasePlacement{ReleaseId: 4, Index: 3},
+	}
+	expectedMoves := []*pb.LocationMove{
+		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 3, Index: 3}},
+		&pb.LocationMove{New: &pb.ReleasePlacement{ReleaseId: 4, Index: 3}},
+		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 1, Index: 1}, New: &pb.ReleasePlacement{ReleaseId: 1, Index: 2}},
+	}
+
+	moves := getMoves(start, end)
+	if len(moves) != 3 {
+		t.Errorf("Not enough moves: %v", moves)
+	}
+	for i := range moves {
+		if !proto.Equal(moves[i], expectedMoves[i]) {
+			t.Errorf("Bad move : %v (expected %v)", moves[i], expectedMoves[i])
+		}
+	}
 }
 
 func TestGetLocation(t *testing.T) {
