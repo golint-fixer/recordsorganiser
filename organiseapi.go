@@ -60,7 +60,7 @@ func (s Server) save() {
 		os.MkdirAll(s.saveLocation, 0777)
 	}
 
-	data, _ := proto.Marshal(&s.org)
+	data, _ := proto.Marshal(s.org)
 	ioutil.WriteFile(s.saveLocation+"/"+strconv.Itoa(int(time.Now().Unix()))+".data", data, 0644)
 }
 
