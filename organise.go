@@ -20,7 +20,7 @@ type Server struct {
 	*goserver.GoServer
 	saveLocation string
 	bridge       discogsBridge
-	org          *pb.Organisation
+	org          pb.Organisation
 }
 
 type discogsBridge interface {
@@ -66,7 +66,7 @@ func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement) []*pb.Lo
 
 // GetOrganisation Gets the current organisation
 func (s *Server) GetOrganisation(ctx context.Context, in *pb.Empty) (*pb.Organisation, error) {
-	return s.org, nil
+	return &s.org, nil
 }
 
 // GetOrganisations Gets all the available organisations
