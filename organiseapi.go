@@ -45,6 +45,24 @@ func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
 	return result
 }
 
+func compare(collectionStart *pb.Organisation, collectionEnd *pb.Organisation) []*pb.LocationMove {
+	var moves []*pb.LocationMove
+
+	for _, folder := range collectionEnd.Locations {
+		var matcher = &pb.Location{}
+		for _, otherFolder := range collectionStart.Locations {
+			if otherFolder.Name == folder.Name {
+				matcher = otherFolder
+			}
+		}
+
+		diff := getMoves(matcher.ReleasesLocation, folder.ReleasesLocation)
+		moves = append(moves, diff...)
+	}
+
+	return moves
+}
+
 // DoRegister does RPC registration
 func (s Server) DoRegister(server *grpc.Server) {
 	pb.RegisterOrganiserServiceServer(server, &s)
