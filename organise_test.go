@@ -118,6 +118,26 @@ func TestGetLocation(t *testing.T) {
 
 	testServer.AddLocation(context.Background(), location)
 
+	testServer2 := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer2.org = loadLatest(".testoutget")
+	retrLocation := &pb.Location{Name: "TestName"}
+	retr, err := testServer2.GetLocation(context.Background(), retrLocation)
+	if err != nil {
+		t.Errorf("Error on getting location: %v", err)
+	}
+
+	if retr.Name != "TestName" {
+		t.Errorf("Location name is wrong: %v", retrLocation)
+	}
+
+	if len(retr.FolderIds) == 0 || retr.FolderIds[0] != 10 {
+		t.Errorf("Folder Id has come back wrong: %v", retrLocation)
+	}
+}
+
+func TestGetLocationFail(t *testing.T) {
+	testServer := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+
 	location2 := &pb.Location{
 		Name:      "TestName",
 		Units:     2,

@@ -1,3 +1,3 @@
 ## Record Organiser
 
-Organises my records.
+Organises my records. Because.
