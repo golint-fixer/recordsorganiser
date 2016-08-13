@@ -2,8 +2,10 @@ package main
 
 import (
 	"errors"
+	"io/ioutil"
 	"log"
 	"sort"
+	"strings"
 
 	"github.com/brotherlogic/diffmove"
 	"github.com/brotherlogic/goserver"
@@ -60,6 +62,20 @@ func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement) []*pb.Lo
 	}
 
 	return moves
+}
+
+// GetOrganisations Gets all the available organisations
+func (s *Server) GetOrganisations(ctx context.Context, in *pb.Empty) (*pb.OrganisationList, error) {
+	orgList := &pb.OrganisationList{}
+	files, _ := ioutil.ReadDir(s.saveLocation)
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), ".data") {
+			org, _ := load(s.saveLocation, file.Name()[0:len(file.Name())-5])
+			orgList.Organisations = append(orgList.Organisations, org)
+		}
+	}
+
+	return orgList, nil
 }
 
 // GetLocation Gets an existing location

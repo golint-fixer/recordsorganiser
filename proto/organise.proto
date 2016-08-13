@@ -45,6 +45,10 @@ message Organisation {
         repeated Location locations = 2;
 }
 
+message OrganisationList {
+        repeated Organisation organisations = 1;
+}
+
 message LocationMove {
         ReleasePlacement old = 1;
         ReleasePlacement new = 2;
@@ -61,4 +65,5 @@ service OrganiserService {
         //rpc Locate (godiscogs.Release) returns (Location) {};
         rpc AddLocation (Location) returns (Location) {};
         rpc GetLocation (Location) returns (Location) {};
+        rpc GetOrganisations (Empty) returns (OrganisationList) {};
 }
