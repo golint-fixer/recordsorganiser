@@ -2,6 +2,7 @@ package main
 
 import (
 	"testing"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -29,6 +30,23 @@ func (discogsBridge testBridge) getReleases(folders []int32) []*pbd.Release {
 	})
 
 	return result
+}
+
+func TestGetOrganisations(t *testing.T) {
+	testServer := &Server{saveLocation: ".testgetorgs", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.save()
+
+	//Sleep for 1.5 seconds to bump the timestamp
+	time.Sleep(time.Millisecond * 1500)
+	testServer.save()
+
+	organisations, err := testServer.GetOrganisations(context.Background(), &pb.Empty{})
+	if err != nil {
+		t.Errorf("Get Organisations returned an errors: %v", err)
+	}
+	if len(organisations.Organisations) != 2 {
+		t.Errorf("Organisations has returned wrong: %v", organisations)
+	}
 }
 
 func TestCompareMoves(t *testing.T) {

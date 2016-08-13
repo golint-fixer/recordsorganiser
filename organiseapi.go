@@ -59,9 +59,19 @@ func (s Server) save() {
 	ioutil.WriteFile(s.saveLocation+"/"+strconv.Itoa(int(time.Now().Unix()))+".data", data, 0644)
 }
 
-func loadLatest(folder string) *pb.Organisation {
+func load(folder string, timestamp string) (*pb.Organisation, error) {
 	org := &pb.Organisation{}
+	data, err := ioutil.ReadFile(folder + "/" + timestamp + ".data")
 
+	if err != nil {
+		return nil, err
+	}
+
+	proto.Unmarshal(data, org)
+	return org, nil
+}
+
+func loadLatest(folder string) *pb.Organisation {
 	bestNum := 0
 	files, err := ioutil.ReadDir(folder)
 
@@ -82,11 +92,11 @@ func loadLatest(folder string) *pb.Organisation {
 	}
 
 	if bestNum > 0 {
-		data, _ := ioutil.ReadFile(folder + "/" + strconv.Itoa(bestNum) + ".data")
-		proto.Unmarshal(data, org)
+		nOrg, _ := load(folder, strconv.Itoa(bestNum))
+		return nOrg
 	}
 
-	return org
+	return nil
 }
 
 // InitServer builds an initial server
@@ -138,7 +148,7 @@ func test() {
 }
 
 func main() {
-	var folder = flag.String("folder", "/home/simon/.discogs/", "Location to store the records")
+	var folder = flag.String("folder", "/home/simon/.discogs/collection", "Location to store the records")
 	flag.Parse()
 	server := InitServer(folder)
 
