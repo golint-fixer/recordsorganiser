@@ -85,8 +85,12 @@ func (s *Server) GetOrganisations(ctx context.Context, in *pb.Empty) (*pb.Organi
 
 // GetLocation Gets an existing location
 func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Location, error) {
+
+	log.Printf("Now server: %v with %v", s, s.org)
+
 	for _, storedLocation := range s.org.GetLocations() {
 		if storedLocation.Name == location.Name {
+			log.Printf("Returning %v", storedLocation)
 			return storedLocation, nil
 		}
 	}
@@ -115,8 +119,10 @@ func (s *Server) AddLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 
 	location.ReleasesLocation = locations
 
+	log.Printf("Appending %v", location)
 	s.org.Locations = append(s.org.Locations, location)
+	log.Printf("Result %v", s.org)
 	s.save()
-
+	log.Printf("Saved %v from %v", s.org, s)
 	return location, nil
 }
