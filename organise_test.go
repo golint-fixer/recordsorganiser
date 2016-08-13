@@ -47,6 +47,10 @@ func TestGetOrganisations(t *testing.T) {
 	if len(organisations.Organisations) != 2 {
 		t.Errorf("Organisations has returned wrong: %v", organisations)
 	}
+
+	if organisations.Organisations[0].Timestamp <= 0 {
+		t.Errorf("Timestamp has come back as wrong: %v", organisations.Organisations[0])
+	}
 }
 
 func TestCompareMoves(t *testing.T) {
