@@ -60,7 +60,7 @@ func (s Server) save() {
 		os.MkdirAll(s.saveLocation, 0777)
 	}
 
-	data, _ := proto.Marshal(s.org)
+	data, _ := proto.Marshal(&s.org)
 	ioutil.WriteFile(s.saveLocation+"/"+strconv.Itoa(int(time.Now().Unix()))+".data", data, 0644)
 }
 
@@ -106,9 +106,9 @@ func loadLatest(folder string) *pb.Organisation {
 
 // InitServer builds an initial server
 func InitServer(folder *string) Server {
-	server := Server{&goserver.GoServer{}, *folder, prodBridge{}, &pb.Organisation{}}
+	server := Server{&goserver.GoServer{}, *folder, prodBridge{}, pb.Organisation{}}
 	server.Register = server
-	server.org = loadLatest(*folder)
+	server.org = *loadLatest(*folder)
 
 	return server
 }
