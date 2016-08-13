@@ -17,4 +17,4 @@ before_install:
   
 script:
 - fgt golint $(find . | grep .go$ | grep -v organise.pb.go)
-- $HOME/gopath/bin/goveralls -service=travis-ci -ignore=organiseapi.go github.com/brotherlogic/recordsorganiser
+- go test ./...

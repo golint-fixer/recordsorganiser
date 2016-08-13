@@ -32,6 +32,31 @@ func (discogsBridge testBridge) getReleases(folders []int32) []*pbd.Release {
 	return result
 }
 
+func TestListLocations(t *testing.T) {
+	testServer := &Server{saveLocation: ".testgetorgs", bridge: testBridge{}, org: &pb.Organisation{}}
+	location := &pb.Location{
+		Name:      "TestName",
+		Units:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+
+	testServer.AddLocation(context.Background(), location)
+
+	org, err := testServer.GetOrganisation(context.Background(), &pb.Empty{})
+
+	if err != nil {
+		t.Errorf("Error retrieving current organisation")
+	}
+
+	if len(org.Locations) != 1 {
+		t.Errorf("Too Many Locations: %v", org)
+	}
+	if org.Locations[0].Name != "TestName" {
+		t.Errorf("Location name is incorrect: %v", org.Locations[0])
+	}
+}
+
 func TestGetOrganisations(t *testing.T) {
 	testServer := &Server{saveLocation: ".testgetorgs", bridge: testBridge{}, org: &pb.Organisation{}}
 	testServer.save()
