@@ -64,6 +64,11 @@ func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement) []*pb.Lo
 	return moves
 }
 
+// GetOrganisation Gets the current organisation
+func (s *Server) GetOrganisation(ctx context.Context, in *pb.Empty) (*pb.Organisation, error) {
+	return s.org, nil
+}
+
 // GetOrganisations Gets all the available organisations
 func (s *Server) GetOrganisations(ctx context.Context, in *pb.Empty) (*pb.OrganisationList, error) {
 	orgList := &pb.OrganisationList{}
