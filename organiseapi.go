@@ -148,7 +148,7 @@ func test() {
 }
 
 func main() {
-	var folder = flag.String("folder", "/home/simon/.discogs/collection", "Location to store the records")
+	var folder = flag.String("folder", "/home/simon/.discogsorg", "Location to store the records")
 	flag.Parse()
 	server := InitServer(folder)
 
