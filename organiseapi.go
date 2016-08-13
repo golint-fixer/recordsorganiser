@@ -107,7 +107,10 @@ func loadLatest(folder string) *pb.Organisation {
 // InitServer builds an initial server
 func InitServer(folder *string) Server {
 	server := Server{&goserver.GoServer{}, *folder, prodBridge{}, &pb.Organisation{}}
-	server.org = loadLatest(*folder)
+	latest := loadLatest(*folder)
+	if latest != nil {
+		server.org = loadLatest(*folder)
+	}
 	server.Register = server
 
 	return server
