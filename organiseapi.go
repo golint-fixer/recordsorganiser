@@ -52,9 +52,8 @@ func (s Server) DoRegister(server *grpc.Server) {
 
 func (s Server) save() {
 
-	if s.org.Timestamp == 0 {
-		s.org.Timestamp = time.Now().Unix()
-	}
+	// Always update the timestamp on a save
+	s.org.Timestamp = time.Now().Unix()
 
 	if _, err := os.Stat(s.saveLocation); os.IsNotExist(err) {
 		os.MkdirAll(s.saveLocation, 0777)

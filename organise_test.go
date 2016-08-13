@@ -76,6 +76,10 @@ func TestGetOrganisations(t *testing.T) {
 	if organisations.Organisations[0].Timestamp <= 0 {
 		t.Errorf("Timestamp has come back as wrong: %v", organisations.Organisations[0])
 	}
+
+	if organisations.Organisations[0].Timestamp == organisations.Organisations[1].Timestamp {
+		t.Errorf("Timestamps are equal between two saves: %v", organisations.Organisations)
+	}
 }
 
 func TestCompareMoves(t *testing.T) {
