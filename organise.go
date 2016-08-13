@@ -83,6 +83,22 @@ func (s *Server) GetOrganisations(ctx context.Context, in *pb.Empty) (*pb.Organi
 	return orgList, nil
 }
 
+// Organise Organises out the whole collection
+func (s *Server) Organise(ctx context.Context, in *pb.Empty) (*pb.OrganisationMoves, error) {
+	initialList := loadLatest(s.saveLocation)
+	newList := &pb.Organisation{}
+
+	for _, folder := range initialList.Locations {
+		newList.Locations = append(newList.Locations, s.arrangeLocation(folder))
+	}
+
+	diffs := compare(initialList, newList)
+	s.org = newList
+	s.save()
+
+	return &pb.OrganisationMoves{StartTimestamp: initialList.Timestamp, EndTimestamp: s.org.Timestamp, Moves: diffs}, nil
+}
+
 // GetLocation Gets an existing location
 func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Location, error) {
 
@@ -98,14 +114,14 @@ func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 	return &pb.Location{}, errors.New("Cannot find location called " + location.Name)
 }
 
-// AddLocation Adds a new location to the organiser
-func (s *Server) AddLocation(ctx context.Context, location *pb.Location) (*pb.Location, error) {
-	var locations []*pb.ReleasePlacement
+func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
 	releases := s.bridge.getReleases(location.FolderIds)
+	retLocation := &pb.Location{Name: location.Name, Units: location.Units, FolderIds: location.FolderIds, Sort: location.Sort}
 
 	sort.Sort(pbd.ByLabelCat(releases))
 	splits := pbd.Split(releases, float64(location.Units))
 
+	var locations []*pb.ReleasePlacement
 	for i, split := range splits {
 		for j, rel := range split {
 			place := &pb.ReleasePlacement{
@@ -117,12 +133,17 @@ func (s *Server) AddLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 		}
 	}
 
-	location.ReleasesLocation = locations
+	retLocation.ReleasesLocation = locations
+	return retLocation
+}
 
-	log.Printf("Appending %v", location)
-	s.org.Locations = append(s.org.Locations, location)
+// AddLocation Adds a new location to the organiser
+func (s *Server) AddLocation(ctx context.Context, location *pb.Location) (*pb.Location, error) {
+	newLocation := s.arrangeLocation(location)
+	log.Printf("Appending %v", newLocation)
+	s.org.Locations = append(s.org.Locations, newLocation)
 	log.Printf("Result %v", s.org)
 	s.save()
 	log.Printf("Saved %v from %v", s.org, s)
-	return location, nil
+	return newLocation, nil
 }

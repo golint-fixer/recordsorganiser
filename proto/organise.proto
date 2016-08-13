@@ -54,8 +54,6 @@ message LocationMove {
         ReleasePlacement new = 2;
 }
 
-
-
 message OrganisationMoves {
         int64 start_timestamp = 1;
         int64 end_timestamp = 2;
@@ -63,10 +61,10 @@ message OrganisationMoves {
 }
 
 service OrganiserService {
-        //rpc Organise (Empty) returns (OrganisationMoves) {};
+        rpc Organise (Empty) returns (OrganisationMoves) {};
         //rpc Locate (godiscogs.Release) returns (Location) {};
         rpc AddLocation (Location) returns (Location) {};
         rpc GetLocation (Location) returns (Location) {};
         rpc GetOrganisations (Empty) returns (OrganisationList) {};
-        rpc GetOrganisation (Empty) returns (Organisation) {};  
+        rpc GetOrganisation (Empty) returns (Organisation) {};
 }
