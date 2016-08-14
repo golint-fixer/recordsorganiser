@@ -3,8 +3,14 @@ syntax = "proto3";
 package proto;
 
 import "github.com/brotherlogic/godiscogs/godiscogs.proto";
+import "github.com/brotherlogic/discogssyncer/server/server.proto";
 
 message Empty {}
+
+message CombinedRelease {
+  godiscogs.Release release = 1;
+  discogsserver.ReleaseMetadata metadata = 2;
+}
 
 message ReleasePlacement {
         // The id of the release
@@ -39,6 +45,7 @@ message Location {
         // The means by which the folder is sorted
         enum Sorting {
              BY_LABEL_CATNO = 0;
+             BY_DATE_ADDED = 1;
         }
         Sorting sort = 5;
 }

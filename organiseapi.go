@@ -26,6 +26,15 @@ import (
 // Bridge that accesses discogs syncer server
 type prodBridge struct{}
 
+func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) *pbs.ReleaseMetadata {
+	ip, port := getIP("discogssyncer", "10.0.1.17", 50055)
+	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
+	defer conn.Close()
+	client := pbs.NewDiscogsServiceClient(conn)
+	meta, _ := client.GetMetadata(context.Background(), rel)
+	return meta
+}
+
 func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
 	var result []*pbd.Release
 

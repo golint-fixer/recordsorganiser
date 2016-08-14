@@ -6,12 +6,17 @@ import (
 
 	"golang.org/x/net/context"
 
+	pbs "github.com/brotherlogic/discogssyncer/server"
 	pbd "github.com/brotherlogic/godiscogs"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 	"github.com/golang/protobuf/proto"
 )
 
 type testBridge struct{}
+
+func (discogsBridge testBridge) getMetadata(rel *pbd.Release) *pbs.ReleaseMetadata {
+	return nil
+}
 
 func (discogsBridge testBridge) getReleases(folders []int32) []*pbd.Release {
 	var result []*pbd.Release
