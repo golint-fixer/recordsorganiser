@@ -87,4 +87,5 @@ service OrganiserService {
         rpc GetLocation (Location) returns (Location) {};
         rpc GetOrganisations (Empty) returns (OrganisationList) {};
         rpc GetOrganisation (Empty) returns (Organisation) {};
+          rpc UpdateLocation (Location) returns (Location) {};
 }

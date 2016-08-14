@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"testing"
 	"time"
 
@@ -15,7 +16,16 @@ import (
 type testBridge struct{}
 
 func (discogsBridge testBridge) getMetadata(rel *pbd.Release) *pbs.ReleaseMetadata {
-	return nil
+	metadata := &pbs.ReleaseMetadata{}
+	switch rel.Id {
+	case 1:
+		metadata.DateAdded = time.Now().Unix()
+	case 2:
+		metadata.DateAdded = time.Now().Unix() - 100
+	case 3:
+		metadata.DateAdded = time.Now().Unix() + 100
+	}
+	return metadata
 }
 
 func (discogsBridge testBridge) getReleases(folders []int32) []*pbd.Release {
@@ -185,6 +195,47 @@ func TestGetLocation(t *testing.T) {
 
 	if len(retr.FolderIds) == 0 || retr.FolderIds[0] != 10 {
 		t.Errorf("Folder Id has come back wrong: %v", retrLocation)
+	}
+}
+
+func TestUpdateLocation(t *testing.T) {
+	testServer := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+
+	location := &pb.Location{
+		Name:      "TestName",
+		Units:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+	log.Printf("BLAH %v", location.Sort)
+
+	testServer.AddLocation(context.Background(), location)
+
+	locationUpdate := &pb.Location{
+		Name: "TestName",
+		Sort: pb.Location_BY_DATE_ADDED,
+	}
+	testServer.UpdateLocation(context.Background(), locationUpdate)
+
+	testServer2 := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer2.org = loadLatest(".testoutget")
+	retrLocation := &pb.Location{Name: "TestName"}
+	retr, err := testServer2.GetLocation(context.Background(), retrLocation)
+	if err != nil {
+		t.Errorf("Error on getting location: %v", err)
+	}
+
+	if retr.Name != "TestName" {
+		t.Errorf("Location name is wrong: '%v' vs %v", retrLocation, location)
+	}
+
+	if len(retr.FolderIds) == 0 || retr.FolderIds[0] != 10 {
+		t.Errorf("Folder Id has come back wrong: %v", retr)
+	}
+
+	//Check that we have re-orged as part of the UpdateLocation
+	if retr.ReleasesLocation[0].ReleaseId != 2 {
+		t.Errorf("Re-org has not occured: %v", retr)
 	}
 }
 
