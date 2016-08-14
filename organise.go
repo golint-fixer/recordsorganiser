@@ -5,12 +5,17 @@ import (
 	"io/ioutil"
 	"log"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
+
+	"google.golang.org/grpc"
 
 	"github.com/brotherlogic/diffmove"
 	"github.com/brotherlogic/goserver"
 	"golang.org/x/net/context"
 
+	pbs "github.com/brotherlogic/discogssyncer/server"
 	pbd "github.com/brotherlogic/godiscogs"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 )
@@ -83,9 +88,33 @@ func (s *Server) GetOrganisations(ctx context.Context, in *pb.Empty) (*pb.Organi
 	return orgList, nil
 }
 
+func (s Server) runOrgSteps() {
+	s.moveOldRecordsToPile()
+}
+
+func (s Server) moveOldRecordsToPile() {
+	ip, port := getIP("discogssyncer", "10.0.1.17", 50055)
+	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
+	defer conn.Close()
+	client := pbs.NewDiscogsServiceClient(conn)
+
+	records, err := client.GetReleasesInFolder(context.Background(), &pbs.FolderList{Folders: []*pbd.Folder{&pbd.Folder{Id: 673768}}})
+	if err != nil {
+		panic(err)
+	}
+
+	for _, record := range records.Releases {
+		meta, _ := client.GetMetadata(context.Background(), record)
+		if meta.DateAdded < (time.Now().AddDate(0, -3, 0).Unix()) {
+			client.MoveToFolder(context.Background(), &pbs.ReleaseMove{Release: record, NewFolderId: 812802})
+		}
+	}
+}
+
 // Organise Organises out the whole collection
 func (s *Server) Organise(ctx context.Context, in *pb.Empty) (*pb.OrganisationMoves, error) {
 	initialList := loadLatest(s.saveLocation)
+	s.runOrgSteps()
 	newList := &pb.Organisation{}
 
 	for _, folder := range initialList.Locations {
