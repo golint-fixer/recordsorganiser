@@ -99,6 +99,7 @@ func (s *Server) Locate(ctx context.Context, in *pbd.Release) (*pb.ReleaseLocati
 					}
 				}
 			}
+			return relLoc, nil
 		}
 	}
 
