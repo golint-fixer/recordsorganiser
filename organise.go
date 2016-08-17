@@ -30,6 +30,7 @@ type Server struct {
 
 type discogsBridge interface {
 	getReleases(folders []int32) []*pbd.Release
+	getRelease(ID int32) *pbd.Release
 }
 
 func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement) []*pb.LocationMove {
@@ -72,6 +73,34 @@ func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement) []*pb.Lo
 // GetOrganisation Gets the current organisation
 func (s *Server) GetOrganisation(ctx context.Context, in *pb.Empty) (*pb.Organisation, error) {
 	return s.org, nil
+}
+
+// Locate gets the location of a given release
+func (s *Server) Locate(ctx context.Context, in *pbd.Release) (*pb.ReleaseLocation, error) {
+	relLoc := &pb.ReleaseLocation{}
+	foundIndex := -1
+	for _, loc := range s.org.Locations {
+		for _, rel := range loc.ReleasesLocation {
+			if rel.ReleaseId == in.Id {
+				foundIndex = int(rel.Index)
+				relLoc.Location = loc
+				relLoc.Slot = rel.Slot
+			}
+		}
+		if foundIndex >= 0 {
+			for _, rel := range loc.ReleasesLocation {
+				log.Printf("%v -> %v", rel, foundIndex)
+				if int(rel.Index) == foundIndex-1 {
+					relLoc.Before = s.bridge.getRelease(rel.ReleaseId)
+				}
+				if int(rel.Index) == foundIndex+1 {
+					relLoc.After = s.bridge.getRelease(rel.ReleaseId)
+				}
+			}
+		}
+	}
+
+	return relLoc, nil
 }
 
 // GetOrganisations Gets all the available organisations
