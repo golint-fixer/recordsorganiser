@@ -69,6 +69,11 @@ func TestGetReleaseLocation(t *testing.T) {
 	if relLocation.After == nil || relLocation.After.Id != 3 {
 		t.Errorf("Release location has come back wrong: %v", relLocation)
 	}
+
+	relLocation, _ = testServer.Locate(context.Background(), &pbd.Release{Id: 1})
+	if relLocation.Before != nil || relLocation.After != nil {
+		t.Errorf("Release location has come back wrong: %v", relLocation)
+	}
 }
 
 func TestListLocations(t *testing.T) {
