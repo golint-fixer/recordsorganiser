@@ -17,19 +17,58 @@ func (discogsBridge testBridge) getReleases(folders []int32) []*pbd.Release {
 	var result []*pbd.Release
 
 	result = append(result, &pbd.Release{
+		Id:             1,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "FirstLabel"}},
 		FormatQuantity: 2,
 	})
 	result = append(result, &pbd.Release{
+		Id:             2,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "SecondLabel"}},
 		FormatQuantity: 1,
 	})
 	result = append(result, &pbd.Release{
+		Id:             3,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "ThirdLabel"}},
 		FormatQuantity: 1,
 	})
 
 	return result
+}
+
+func (discogsBridge testBridge) getRelease(ID int32) *pbd.Release {
+	return &pbd.Release{Id: ID}
+}
+
+func TestGetReleaseLocation(t *testing.T) {
+	testServer := &Server{saveLocation: ".testgetlocation", bridge: testBridge{}, org: &pb.Organisation{}}
+	location := &pb.Location{
+		Name:      "TestName",
+		Units:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+	testServer.AddLocation(context.Background(), location)
+
+	relLocation, err := testServer.Locate(context.Background(), &pbd.Release{Id: 2})
+
+	if err != nil {
+		t.Errorf("GetReleaseLocation has failed: %v", err)
+	}
+
+	if relLocation == nil {
+		t.Errorf("Err: %v", relLocation)
+	}
+
+	if relLocation.Slot != 2 {
+		t.Errorf("Slot has come back wrong: %v", relLocation)
+	}
+
+	if relLocation.Before != nil {
+		t.Errorf("Release location has come back wrong: %v", relLocation)
+	}
+	if relLocation.After == nil || relLocation.After.Id != 3 {
+		t.Errorf("Release location has come back wrong: %v", relLocation)
+	}
 }
 
 func TestListLocations(t *testing.T) {
@@ -161,7 +200,7 @@ func TestGetLocationFail(t *testing.T) {
 }
 
 func TestAddLocation(t *testing.T) {
-	testServer := &Server{saveLocation: ".testout", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer := &Server{saveLocation: ".testaddalocation", bridge: testBridge{}, org: &pb.Organisation{}}
 
 	location := &pb.Location{
 		Name:      "TestName",
@@ -181,5 +220,9 @@ func TestAddLocation(t *testing.T) {
 
 	if newLocation.ReleasesLocation[1].Slot != 2 {
 		t.Errorf("Second release is in the wrong slot: %v", newLocation.ReleasesLocation[1])
+	}
+
+	if newLocation.ReleasesLocation[1].Index != 1 {
+		t.Errorf("Second release has the wrong index %v", newLocation)
 	}
 }
