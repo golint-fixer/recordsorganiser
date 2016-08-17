@@ -90,11 +90,13 @@ func (s *Server) Locate(ctx context.Context, in *pbd.Release) (*pb.ReleaseLocati
 		if foundIndex >= 0 {
 			for _, rel := range loc.ReleasesLocation {
 				log.Printf("%v -> %v", rel, foundIndex)
-				if int(rel.Index) == foundIndex-1 {
-					relLoc.Before = s.bridge.getRelease(rel.ReleaseId)
-				}
-				if int(rel.Index) == foundIndex+1 {
-					relLoc.After = s.bridge.getRelease(rel.ReleaseId)
+				if rel.Slot == relLoc.Slot {
+					if int(rel.Index) == foundIndex-1 {
+						relLoc.Before = s.bridge.getRelease(rel.ReleaseId)
+					}
+					if int(rel.Index) == foundIndex+1 {
+						relLoc.After = s.bridge.getRelease(rel.ReleaseId)
+					}
 				}
 			}
 		}
