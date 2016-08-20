@@ -31,6 +31,7 @@ type Server struct {
 type discogsBridge interface {
 	getReleases(folders []int32) []*pbd.Release
 	getRelease(ID int32) *pbd.Release
+	getMetadata(release *pbd.Release) *pbs.ReleaseMetadata
 }
 
 func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement) []*pb.LocationMove {
@@ -187,7 +188,18 @@ func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
 	releases := s.bridge.getReleases(location.FolderIds)
 	retLocation := &pb.Location{Name: location.Name, Units: location.Units, FolderIds: location.FolderIds, Sort: location.Sort}
 
-	sort.Sort(pbd.ByLabelCat(releases))
+	switch location.Sort {
+	case pb.Location_BY_LABEL_CATNO:
+		sort.Sort(pbd.ByLabelCat(releases))
+	case pb.Location_BY_DATE_ADDED:
+		var combined []*pb.CombinedRelease
+		for _, release := range releases {
+			meta := s.bridge.getMetadata(release)
+			comb := &pb.CombinedRelease{Release: release, Metadata: meta}
+			combined = append(combined, comb)
+		}
+		sort.Sort(ByDateAdded(combined))
+	}
 	splits := pbd.Split(releases, float64(location.Units))
 
 	var locations []*pb.ReleasePlacement
