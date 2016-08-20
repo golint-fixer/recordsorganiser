@@ -13,6 +13,7 @@ import (
 
 	"github.com/brotherlogic/diffmove"
 	"github.com/brotherlogic/goserver"
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 
 	pbs "github.com/brotherlogic/discogssyncer/server"
@@ -199,6 +200,11 @@ func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
 			combined = append(combined, comb)
 		}
 		sort.Sort(ByDateAdded(combined))
+		newReleases := make([]*pbd.Release, len(releases))
+		for i, comb := range combined {
+			newReleases[i] = comb.Release
+		}
+		releases = newReleases
 	}
 	splits := pbd.Split(releases, float64(location.Units))
 
@@ -215,6 +221,7 @@ func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
 	}
 
 	retLocation.ReleasesLocation = locations
+	log.Printf("RETURNING: %v", retLocation)
 	return retLocation
 }
 
@@ -227,4 +234,20 @@ func (s *Server) AddLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 	s.save()
 	log.Printf("Saved %v from %v", s.org, s)
 	return newLocation, nil
+}
+
+//UpdateLocation updates the location with new properties
+func (s *Server) UpdateLocation(ctx context.Context, in *pb.Location) (*pb.Location, error) {
+	for i, loc := range s.org.Locations {
+		if loc.Name == in.Name {
+			proto.Merge(loc, in)
+			log.Printf("START ARRANGE %v -> %v", loc, in)
+			newLocation := s.arrangeLocation(loc)
+			log.Printf("NEW LOCATION: %v", newLocation)
+			s.org.Locations[i] = newLocation
+			s.save()
+			return newLocation, nil
+		}
+	}
+	return nil, errors.New("Cannot find location in org")
 }
