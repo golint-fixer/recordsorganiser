@@ -138,9 +138,9 @@ func TestCompareMoves(t *testing.T) {
 		&pb.ReleasePlacement{ReleaseId: 4, Index: 3},
 	}
 	expectedMoves := []*pb.LocationMove{
-		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 3, Index: 3}},
-		&pb.LocationMove{New: &pb.ReleasePlacement{ReleaseId: 4, Index: 3}},
-		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 1, Index: 1}, New: &pb.ReleasePlacement{ReleaseId: 1, Index: 2}},
+		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 3, Index: 3, BeforeReleaseId: 2}},
+		&pb.LocationMove{New: &pb.ReleasePlacement{ReleaseId: 4, Index: 3, BeforeReleaseId: 2}},
+		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 1, Index: 1, AfterReleaseId: 2}, New: &pb.ReleasePlacement{ReleaseId: 1, Index: 2, BeforeReleaseId: 2, AfterReleaseId: 4}},
 	}
 
 	moves := getMoves(start, end)

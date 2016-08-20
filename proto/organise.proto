@@ -15,6 +15,12 @@ message ReleasePlacement {
 
         // The slot in the folder
         int32 slot = 3;
+
+        // The prior release
+        int32 before_release_id = 4;
+
+        // The following release
+        int32 after_release_id = 5;
 }
 
 message Location {

@@ -52,17 +52,21 @@ func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement) []*pb.Lo
 		switch move.Move {
 		case "Add":
 			moves = append(moves, &pb.LocationMove{
-				New: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1)},
+				New: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1),
+					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow)},
 			})
 		case "Delete":
 			moves = append(moves, &pb.LocationMove{
-				Old: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1)},
+				Old: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1),
+					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow)},
 			})
 			log.Printf("WHAT = %v from %v", moves, move)
 		case "Move":
 			moves = append(moves, &pb.LocationMove{
-				Old: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1)},
-				New: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.End + 1)},
+				Old: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1),
+					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow)},
+				New: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.End + 1),
+					BeforeReleaseId: int32(move.EndPrior), AfterReleaseId: int32(move.EndFollow)},
 			})
 		}
 	}
