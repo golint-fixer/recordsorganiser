@@ -138,7 +138,11 @@ func (s Server) moveOldRecordsToPile() {
 	for _, record := range records.Releases {
 		meta, _ := client.GetMetadata(context.Background(), record)
 		if meta.DateAdded < (time.Now().AddDate(0, -3, 0).Unix()) {
-			client.MoveToFolder(context.Background(), &pbs.ReleaseMove{Release: record, NewFolderId: 812802})
+			if record.Rating > 0 {
+				client.MoveToFolder(context.Background(), &pbs.ReleaseMove{Release: record, NewFolderId: 242017})
+			} else {
+				client.MoveToFolder(context.Background(), &pbs.ReleaseMove{Release: record, NewFolderId: 812802})
+			}
 		}
 	}
 }
