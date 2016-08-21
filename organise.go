@@ -35,17 +35,34 @@ type discogsBridge interface {
 	getMetadata(release *pbd.Release) *pbs.ReleaseMetadata
 }
 
-func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement) []*pb.LocationMove {
+func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement, slot int) []*pb.LocationMove {
 	var moves []*pb.LocationMove
 
-	//Build out the arrays for diffmove
-	startNumbers := make([]int, len(start))
-	endNumbers := make([]int, len(end))
+	inStartSlot := 0
 	for _, startRec := range start {
-		startNumbers[startRec.Index-1] = int(startRec.ReleaseId)
+		if int(startRec.Slot) == slot && int(startRec.Index) > inStartSlot {
+			inStartSlot = int(startRec.Index)
+		}
+	}
+	inEndSlot := 0
+	for _, endRec := range end {
+		if int(endRec.Slot) == slot && int(endRec.Index) > inEndSlot {
+			inEndSlot = int(endRec.Index)
+		}
+	}
+
+	//Build out the arrays for diffmove
+	startNumbers := make([]int, inStartSlot+1)
+	endNumbers := make([]int, inEndSlot+1)
+	for _, startRec := range start {
+		if int(startRec.Slot) == slot {
+			startNumbers[startRec.Index-1] = int(startRec.ReleaseId)
+		}
 	}
 	for _, endRec := range end {
-		endNumbers[endRec.Index-1] = int(endRec.ReleaseId)
+		if int(endRec.Slot) == slot {
+			endNumbers[endRec.Index-1] = int(endRec.ReleaseId)
+		}
 	}
 	log.Printf("DIFFING %v -> %v", startNumbers, endNumbers)
 	diffMoves := diffmove.Diff(startNumbers, endNumbers)
