@@ -143,14 +143,14 @@ func TestGetOrganisations(t *testing.T) {
 
 func TestCompareMoves(t *testing.T) {
 	start := []*pb.ReleasePlacement{
-		&pb.ReleasePlacement{ReleaseId: 1, Index: 1},
-		&pb.ReleasePlacement{ReleaseId: 2, Index: 2},
-		&pb.ReleasePlacement{ReleaseId: 3, Index: 3},
+		&pb.ReleasePlacement{ReleaseId: 1, Index: 1, Slot: 1},
+		&pb.ReleasePlacement{ReleaseId: 2, Index: 2, Slot: 1},
+		&pb.ReleasePlacement{ReleaseId: 3, Index: 3, Slot: 1},
 	}
 	end := []*pb.ReleasePlacement{
-		&pb.ReleasePlacement{ReleaseId: 1, Index: 2},
-		&pb.ReleasePlacement{ReleaseId: 2, Index: 1},
-		&pb.ReleasePlacement{ReleaseId: 4, Index: 3},
+		&pb.ReleasePlacement{ReleaseId: 1, Index: 2, Slot: 1},
+		&pb.ReleasePlacement{ReleaseId: 2, Index: 1, Slot: 1},
+		&pb.ReleasePlacement{ReleaseId: 4, Index: 3, Slot: 1},
 	}
 	expectedMoves := []*pb.LocationMove{
 		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 3, Index: 3, BeforeReleaseId: 2}},
@@ -158,7 +158,7 @@ func TestCompareMoves(t *testing.T) {
 		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 1, Index: 1, AfterReleaseId: 2}, New: &pb.ReleasePlacement{ReleaseId: 1, Index: 2, BeforeReleaseId: 2, AfterReleaseId: 4}},
 	}
 
-	moves := getMoves(start, end)
+	moves := getMoves(start, end, 1)
 	if len(moves) != 3 {
 		t.Errorf("Not enough moves: %v", moves)
 	}
