@@ -222,6 +222,8 @@ func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
 			newReleases[i] = comb.Release
 		}
 		releases = newReleases
+	case pb.Location_BY_RELEASE_DATE:
+		sort.Sort(ByEarliestReleaseDate(releases))
 	}
 	splits := pbd.Split(releases, float64(location.Units))
 

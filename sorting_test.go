@@ -22,3 +22,17 @@ func TestSortByDateAdded(t *testing.T) {
 		t.Errorf("Releases are not correctly ordered: %v", releases)
 	}
 }
+
+func TestSortByMasterReleaseDate(t *testing.T) {
+	releases := []*pbd.Release{
+		&pbd.Release{Id: 2, EarliestReleaseDate: 15},
+		&pbd.Release{Id: 3, EarliestReleaseDate: 10},
+		&pbd.Release{Id: 4, EarliestReleaseDate: 20},
+	}
+
+	sort.Sort(ByEarliestReleaseDate(releases))
+
+	if releases[0].Id != 3 {
+		t.Errorf("Releases are not correctly ordered: %v", releases)
+	}
+}
