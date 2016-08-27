@@ -46,6 +46,7 @@ message Location {
         enum Sorting {
              BY_LABEL_CATNO = 0;
              BY_DATE_ADDED = 1;
+             BY_RELEASE_DATE = 2;
         }
         Sorting sort = 5;
 }
