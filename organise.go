@@ -93,6 +93,45 @@ func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement, slot int
 	return moves
 }
 
+// Diff computes the diff between two slot organisations
+func (s *Server) Diff(ctx context.Context, in *pb.DiffRequest) (*pb.OrganisationMoves, error) {
+
+	orgStart, err := load(s.saveLocation, strconv.Itoa(int(in.StartTimestamp)))
+	if err != nil {
+		return nil, err
+	}
+	orgEnd, err := load(s.saveLocation, strconv.Itoa(int(in.EndTimestamp)))
+	if err != nil {
+		return nil, err
+	}
+
+	var locStart *pb.Location
+	var locEnd *pb.Location
+	for _, location := range orgStart.Locations {
+		if location.Name == in.LocationName {
+			locStart = location
+		}
+	}
+	for _, location := range orgEnd.Locations {
+		if location.Name == in.LocationName {
+			locEnd = location
+		}
+	}
+
+	if locEnd == nil || locStart == nil {
+		return nil, errors.New("Unable to find location " + in.LocationName)
+	}
+	log.Printf("START = %v", locStart.ReleasesLocation)
+	log.Printf("END = %v", locEnd.ReleasesLocation)
+	moves := getMoves(locStart.ReleasesLocation, locEnd.ReleasesLocation, int(in.Slot))
+	res := &pb.OrganisationMoves{
+		StartTimestamp: in.StartTimestamp,
+		EndTimestamp:   in.EndTimestamp,
+		Moves:          moves,
+	}
+	return res, nil
+}
+
 // GetOrganisation Gets the current organisation
 func (s *Server) GetOrganisation(ctx context.Context, in *pb.Empty) (*pb.Organisation, error) {
 	return s.org, nil
@@ -257,6 +296,7 @@ func (s *Server) AddLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 
 //UpdateLocation updates the location with new properties
 func (s *Server) UpdateLocation(ctx context.Context, in *pb.Location) (*pb.Location, error) {
+	log.Printf("Locations = %v but %v", s.org.Locations, in)
 	for i, loc := range s.org.Locations {
 		if loc.Name == in.Name {
 			proto.Merge(loc, in)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"testing"
 	"time"
 
@@ -116,8 +117,56 @@ func TestListLocations(t *testing.T) {
 	}
 }
 
+func clean(s *Server) {
+	os.RemoveAll(s.saveLocation)
+}
+
+func TestDiff(t *testing.T) {
+	testServer := &Server{saveLocation: ".testdiff", bridge: testBridge{}, org: &pb.Organisation{}}
+	clean(testServer)
+	location := &pb.Location{
+		Name:      "TestName",
+		Units:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+
+	testServer.AddLocation(context.Background(), location)
+	locationUpdate := &pb.Location{
+		Sort: pb.Location_BY_DATE_ADDED,
+		Name: "TestName",
+	}
+	//Wait 2 seconds to let the timestamps change
+	time.Sleep(time.Second * 2)
+	testServer.UpdateLocation(context.Background(), locationUpdate)
+
+	timestamps, err := testServer.GetOrganisations(context.Background(), &pb.Empty{})
+	if err != nil {
+		t.Errorf("Error gettting orgs %v", err)
+	}
+
+	if len(timestamps.GetOrganisations()) != 2 {
+		t.Errorf("Too many organisations present: %v", len(timestamps.GetOrganisations()))
+	}
+
+	diffRequest := &pb.DiffRequest{
+		StartTimestamp: timestamps.Organisations[0].Timestamp,
+		EndTimestamp:   timestamps.Organisations[1].Timestamp,
+		LocationName:   "TestName",
+		Slot:           1,
+	}
+	moves, err := testServer.Diff(context.Background(), diffRequest)
+	if err != nil {
+		t.Errorf("Error running diff %v", err)
+	}
+	if len(moves.Moves) != 2 {
+		t.Errorf("Moves are wrong on diff: %v", moves)
+	}
+}
+
 func TestGetOrganisations(t *testing.T) {
 	testServer := &Server{saveLocation: ".testgetorgs", bridge: testBridge{}, org: &pb.Organisation{}}
+	clean(testServer)
 	testServer.save()
 
 	//Sleep for 1.5 seconds to bump the timestamp

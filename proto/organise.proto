@@ -81,6 +81,13 @@ message ReleaseLocation {
   godiscogs.Release after = 4;
 }
 
+message DiffRequest {
+  int64 start_timestamp = 1;
+  int64 end_timestamp = 2;
+  string location_name = 3;
+  int32 slot = 4;
+}
+
 service OrganiserService {
         rpc Organise (Empty) returns (OrganisationMoves) {};
         rpc Locate (godiscogs.Release) returns (ReleaseLocation) {};
@@ -88,5 +95,6 @@ service OrganiserService {
         rpc GetLocation (Location) returns (Location) {};
         rpc GetOrganisations (Empty) returns (OrganisationList) {};
         rpc GetOrganisation (Empty) returns (Organisation) {};
-          rpc UpdateLocation (Location) returns (Location) {};
+        rpc UpdateLocation (Location) returns (Location) {};
+        rpc Diff (DiffRequest) returns (OrganisationMoves) {};
 }
