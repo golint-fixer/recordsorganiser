@@ -229,12 +229,21 @@ func (s *Server) Organise(ctx context.Context, in *pb.Empty) (*pb.OrganisationMo
 // GetLocation Gets an existing location
 func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Location, error) {
 
-	log.Printf("Now server: %v with %v", s, s.org)
-
-	for _, storedLocation := range s.org.GetLocations() {
-		if storedLocation.Name == location.Name {
-			log.Printf("Returning %v", storedLocation)
-			return storedLocation, nil
+	if location.Timestamp > 0 {
+		//Load up an old version
+		newOrg, _ := load(s.saveLocation, strconv.Itoa(int(location.Timestamp)))
+		for _, storedLocation := range newOrg.Locations {
+			if storedLocation.Name == location.Name {
+				log.Printf("Returning %v", storedLocation)
+				return storedLocation, nil
+			}
+		}
+	} else {
+		for _, storedLocation := range s.org.GetLocations() {
+			if storedLocation.Name == location.Name {
+				log.Printf("Returning %v", storedLocation)
+				return storedLocation, nil
+			}
 		}
 	}
 

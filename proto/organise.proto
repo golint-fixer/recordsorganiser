@@ -49,6 +49,9 @@ message Location {
              BY_RELEASE_DATE = 2;
         }
         Sorting sort = 5;
+
+        // The timestamp of this given location / arrangement
+        int64 timestamp = 6;
 }
 
 message Organisation {
