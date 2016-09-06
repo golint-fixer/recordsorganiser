@@ -108,9 +108,14 @@ func TestRemoveFromStart(t *testing.T) {
 		Index:     3,
 		Slot:      1,
 	}
+	placement4 := &pb.ReleasePlacement{
+		ReleaseId: 3,
+		Index:     1,
+		Slot:      1,
+	}
 
 	pos1 := []*pb.ReleasePlacement{placement1, placement2, placement3}
-	pos2 := []*pb.ReleasePlacement{placement3}
+	pos2 := []*pb.ReleasePlacement{placement4}
 
 	moves := getMoves(pos1, pos2, 1)
 
@@ -119,10 +124,10 @@ func TestRemoveFromStart(t *testing.T) {
 	}
 
 	if moves[0].Old.ReleaseId != 1 {
-		t.Errorf("First move is wrong: %v", moves[0])
+		t.Errorf("First move is wrong: %v (%v)", moves[0], moves[0].Old.ReleaseId)
 	}
 	if moves[1].Old.ReleaseId != 2 {
-		t.Errorf("First move is wrong: %v", moves[1])
+		t.Errorf("Second move is wrong: %v -> %v", moves[1], moves)
 	}
 }
 

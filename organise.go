@@ -52,8 +52,8 @@ func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement, slot int
 	}
 
 	//Build out the arrays for diffmove
-	startNumbers := make([]int, inStartSlot+1)
-	endNumbers := make([]int, inEndSlot+1)
+	startNumbers := make([]int, inStartSlot)
+	endNumbers := make([]int, inEndSlot)
 	for _, startRec := range start {
 		if int(startRec.Slot) == slot {
 			startNumbers[startRec.Index-1] = int(startRec.ReleaseId)
