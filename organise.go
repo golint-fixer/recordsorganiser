@@ -35,7 +35,7 @@ type discogsBridge interface {
 	getMetadata(release *pbd.Release) *pbs.ReleaseMetadata
 }
 
-func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement, slot int) []*pb.LocationMove {
+func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement, slot int, folder string) []*pb.LocationMove {
 	var moves []*pb.LocationMove
 
 	inStartSlot := 0
@@ -72,20 +72,20 @@ func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement, slot int
 		case "Add":
 			moves = append(moves, &pb.LocationMove{
 				New: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1),
-					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow)},
+					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow), Slot: int32(slot), Folder: folder},
 			})
 		case "Delete":
 			moves = append(moves, &pb.LocationMove{
 				Old: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1),
-					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow)},
+					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow), Slot: int32(slot), Folder: folder},
 			})
 			log.Printf("WHAT = %v from %v", moves, move)
 		case "Move":
 			moves = append(moves, &pb.LocationMove{
 				Old: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1),
-					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow)},
+					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow), Slot: int32(slot), Folder: folder},
 				New: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.End + 1),
-					BeforeReleaseId: int32(move.EndPrior), AfterReleaseId: int32(move.EndFollow)},
+					BeforeReleaseId: int32(move.EndPrior), AfterReleaseId: int32(move.EndFollow), Slot: int32(slot), Folder: folder},
 			})
 		}
 	}
@@ -123,7 +123,7 @@ func (s *Server) Diff(ctx context.Context, in *pb.DiffRequest) (*pb.Organisation
 	}
 	log.Printf("START = %v", locStart.ReleasesLocation)
 	log.Printf("END = %v", locEnd.ReleasesLocation)
-	moves := getMoves(locStart.ReleasesLocation, locEnd.ReleasesLocation, int(in.Slot))
+	moves := getMoves(locStart.ReleasesLocation, locEnd.ReleasesLocation, int(in.Slot), in.LocationName)
 	res := &pb.OrganisationMoves{
 		StartTimestamp: in.StartTimestamp,
 		EndTimestamp:   in.EndTimestamp,

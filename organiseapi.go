@@ -83,7 +83,7 @@ func compare(collectionStart *pb.Organisation, collectionEnd *pb.Organisation) [
 		}
 
 		for i := 1; i <= int(folder.Units); i++ {
-			diff := getMoves(matcher.ReleasesLocation, folder.ReleasesLocation, i)
+			diff := getMoves(matcher.ReleasesLocation, folder.ReleasesLocation, i, folder.Name)
 			moves = append(moves, diff...)
 		}
 	}
