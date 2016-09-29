@@ -205,6 +205,15 @@ func TestDiff(t *testing.T) {
 	if len(moves.Moves) != 2 {
 		t.Errorf("Moves are wrong on diff: %v", moves)
 	}
+
+	//Validate the move
+	log.Printf("MOVE = %v", moves)
+	if moves.Moves[0].Old.Slot != 1 {
+		t.Errorf("Slot rep is wrong")
+	}
+	if moves.Moves[0].Old.Folder != "TestName" {
+		t.Errorf("Folder rep is wrong")
+	}
 }
 
 func TestGetOrganisations(t *testing.T) {
@@ -245,12 +254,12 @@ func TestCompareMoves(t *testing.T) {
 		&pb.ReleasePlacement{ReleaseId: 4, Index: 3, Slot: 1},
 	}
 	expectedMoves := []*pb.LocationMove{
-		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 3, Index: 3, BeforeReleaseId: 2}},
-		&pb.LocationMove{New: &pb.ReleasePlacement{ReleaseId: 4, Index: 3, BeforeReleaseId: 2}},
-		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 1, Index: 1, AfterReleaseId: 2}, New: &pb.ReleasePlacement{ReleaseId: 1, Index: 2, BeforeReleaseId: 2, AfterReleaseId: 4}},
+		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 3, Index: 3, BeforeReleaseId: 2, Slot: 1, Folder: "MadeUp"}},
+		&pb.LocationMove{New: &pb.ReleasePlacement{ReleaseId: 4, Index: 3, BeforeReleaseId: 2, Slot: 1, Folder: "MadeUp"}},
+		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 1, Index: 1, AfterReleaseId: 2, Slot: 1, Folder: "MadeUp"}, New: &pb.ReleasePlacement{ReleaseId: 1, Index: 2, BeforeReleaseId: 2, AfterReleaseId: 4, Slot: 1, Folder: "MadeUp"}},
 	}
 
-	moves := getMoves(start, end, 1)
+	moves := getMoves(start, end, 1, "MadeUp")
 	if len(moves) != 3 {
 		t.Errorf("Not enough moves: %v", moves)
 	}

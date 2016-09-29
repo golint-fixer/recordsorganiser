@@ -27,6 +27,9 @@ message ReleasePlacement {
 
         // The following release
         int32 after_release_id = 5;
+
+        // The name of the folder
+        string folder = 6;
 }
 
 message Location {
