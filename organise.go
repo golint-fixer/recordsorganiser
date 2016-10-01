@@ -70,18 +70,18 @@ func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement, slot int
 	for _, move := range diffMoves {
 		switch move.Move {
 		case "Add":
-			moves = append(moves, &pb.LocationMove{
+			moves = append(moves, &pb.LocationMove{SlotMove: false,
 				New: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1),
 					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow), Slot: int32(slot), Folder: folder},
 			})
 		case "Delete":
-			moves = append(moves, &pb.LocationMove{
+			moves = append(moves, &pb.LocationMove{SlotMove: false,
 				Old: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1),
 					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow), Slot: int32(slot), Folder: folder},
 			})
 			log.Printf("WHAT = %v from %v", moves, move)
 		case "Move":
-			moves = append(moves, &pb.LocationMove{
+			moves = append(moves, &pb.LocationMove{SlotMove: true,
 				Old: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1),
 					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow), Slot: int32(slot), Folder: folder},
 				New: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.End + 1),
