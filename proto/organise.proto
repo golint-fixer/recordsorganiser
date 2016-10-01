@@ -72,6 +72,7 @@ message OrganisationList {
 message LocationMove {
         ReleasePlacement old = 1;
         ReleasePlacement new = 2;
+        bool slot_move = 3;
 }
 
 message OrganisationMoves {

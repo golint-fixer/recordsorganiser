@@ -254,9 +254,9 @@ func TestCompareMoves(t *testing.T) {
 		&pb.ReleasePlacement{ReleaseId: 4, Index: 3, Slot: 1},
 	}
 	expectedMoves := []*pb.LocationMove{
-		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 3, Index: 3, BeforeReleaseId: 2, Slot: 1, Folder: "MadeUp"}},
-		&pb.LocationMove{New: &pb.ReleasePlacement{ReleaseId: 4, Index: 3, BeforeReleaseId: 2, Slot: 1, Folder: "MadeUp"}},
-		&pb.LocationMove{Old: &pb.ReleasePlacement{ReleaseId: 1, Index: 1, AfterReleaseId: 2, Slot: 1, Folder: "MadeUp"}, New: &pb.ReleasePlacement{ReleaseId: 1, Index: 2, BeforeReleaseId: 2, AfterReleaseId: 4, Slot: 1, Folder: "MadeUp"}},
+		&pb.LocationMove{SlotMove: false, Old: &pb.ReleasePlacement{ReleaseId: 3, Index: 3, BeforeReleaseId: 2, Slot: 1, Folder: "MadeUp"}},
+		&pb.LocationMove{SlotMove: false, New: &pb.ReleasePlacement{ReleaseId: 4, Index: 3, BeforeReleaseId: 2, Slot: 1, Folder: "MadeUp"}},
+		&pb.LocationMove{SlotMove: true, Old: &pb.ReleasePlacement{ReleaseId: 1, Index: 1, AfterReleaseId: 2, Slot: 1, Folder: "MadeUp"}, New: &pb.ReleasePlacement{ReleaseId: 1, Index: 2, BeforeReleaseId: 2, AfterReleaseId: 4, Slot: 1, Folder: "MadeUp"}},
 	}
 
 	moves := getMoves(start, end, 1, "MadeUp")
@@ -266,6 +266,50 @@ func TestCompareMoves(t *testing.T) {
 	for i := range moves {
 		if !proto.Equal(moves[i], expectedMoves[i]) {
 			t.Errorf("Bad move : %v (expected %v)", moves[i], expectedMoves[i])
+		}
+	}
+}
+
+func TestIdentifySlotMovesCorrectly(t *testing.T) {
+	start := &pb.Organisation{
+		Timestamp: 1,
+		Locations: []*pb.Location{
+			&pb.Location{
+				Name:  "Test",
+				Units: 2,
+				ReleasesLocation: []*pb.ReleasePlacement{
+					&pb.ReleasePlacement{ReleaseId: 1, Index: 1, Slot: 1},
+				},
+			},
+		},
+	}
+
+	end := &pb.Organisation{
+		Timestamp: 1,
+		Locations: []*pb.Location{
+			&pb.Location{
+				Name:  "Test",
+				Units: 2,
+				ReleasesLocation: []*pb.ReleasePlacement{
+					&pb.ReleasePlacement{ReleaseId: 1, Index: 1, Slot: 2},
+				},
+			},
+		},
+	}
+
+	expectedMoves := []*pb.LocationMove{
+		&pb.LocationMove{SlotMove: true, Old: &pb.ReleasePlacement{ReleaseId: 1, Index: 1, Slot: 1, Folder: "Test"}},
+		&pb.LocationMove{SlotMove: true, New: &pb.ReleasePlacement{ReleaseId: 1, Index: 1, Slot: 2, Folder: "Test"}},
+	}
+
+	moves := compare(start, end)
+	if len(moves) != len(expectedMoves) {
+		t.Errorf("Not enough moves (%v vs %v): %v", len(moves), len(expectedMoves), moves)
+	} else {
+		for i := range moves {
+			if !proto.Equal(moves[i], expectedMoves[i]) {
+				t.Errorf("Bad move : %v (expected %v)", moves[i], expectedMoves[i])
+			}
 		}
 	}
 }

@@ -88,6 +88,33 @@ func compare(collectionStart *pb.Organisation, collectionEnd *pb.Organisation) [
 		}
 	}
 
+	// Correct the slot moves
+	for _, move := range moves {
+		if !move.SlotMove {
+			if move.New != nil {
+				for _, location := range collectionStart.Locations {
+					for _, placement := range location.ReleasesLocation {
+						if placement.ReleaseId == move.New.ReleaseId {
+							if location.Name == move.New.Folder {
+								move.SlotMove = true
+							}
+						}
+					}
+				}
+			} else {
+				for _, location := range collectionStart.Locations {
+					for _, placement := range location.ReleasesLocation {
+						if placement.ReleaseId == move.Old.ReleaseId {
+							if location.Name == move.Old.Folder {
+								move.SlotMove = true
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return moves
 }
 
