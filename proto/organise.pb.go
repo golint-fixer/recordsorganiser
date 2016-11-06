@@ -127,7 +127,7 @@ type Location struct {
 	// The number of units within the location
 	Units int32 `protobuf:"varint,2,opt,name=units" json:"units,omitempty"`
 	// The folder ids that are stored in this location
-	FolderIds []int32 `protobuf:"varint,3,rep,name=folder_ids,json=folderIds" json:"folder_ids,omitempty"`
+	FolderIds []int32 `protobuf:"varint,3,rep,packed,name=folder_ids,json=folderIds" json:"folder_ids,omitempty"`
 	// The placement of releases in the folder
 	ReleasesLocation []*ReleasePlacement `protobuf:"bytes,4,rep,name=releases_location,json=releasesLocation" json:"releases_location,omitempty"`
 	Sort             Location_Sorting    `protobuf:"varint,5,opt,name=sort,enum=proto.Location_Sorting" json:"sort,omitempty"`
@@ -290,7 +290,7 @@ var _ grpc.ClientConn
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion3
+const _ = grpc.SupportPackageIsVersion4
 
 // Client API for OrganiserService service
 
@@ -584,7 +584,7 @@ var _OrganiserService_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: fileDescriptor0,
+	Metadata: "organise.proto",
 }
 
 func init() { proto1.RegisterFile("organise.proto", fileDescriptor0) }
