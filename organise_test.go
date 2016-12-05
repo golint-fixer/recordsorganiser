@@ -242,6 +242,29 @@ func TestGetOrganisations(t *testing.T) {
 	}
 }
 
+func TestRemoveFromFront(t *testing.T) {
+	start := []*pb.ReleasePlacement{
+		&pb.ReleasePlacement{ReleaseId: 1, Index: 1, Slot: 1},
+		&pb.ReleasePlacement{ReleaseId: 2, Index: 2, Slot: 1},
+	}
+	end := []*pb.ReleasePlacement{
+		&pb.ReleasePlacement{ReleaseId: 2, Index: 1, Slot: 1},
+	}
+	expectedMoves := []*pb.LocationMove{
+		&pb.LocationMove{SlotMove: false, Old: &pb.ReleasePlacement{ReleaseId: 1, Index: 1, Slot: 1, AfterReleaseId: 2, Folder: "MadeUp"}},
+	}
+
+	moves := getMoves(start, end, 1, "MadeUp")
+	if len(moves) != 1 {
+		t.Errorf("Wrong number of moves: %v", moves)
+	}
+	for i := range moves {
+		if !proto.Equal(moves[i], expectedMoves[i]) {
+			t.Errorf("Bad move : %v (expected %v)", moves[i], expectedMoves[i])
+		}
+	}
+}
+
 func TestCompareMoves(t *testing.T) {
 	start := []*pb.ReleasePlacement{
 		&pb.ReleasePlacement{ReleaseId: 1, Index: 1, Slot: 1},
