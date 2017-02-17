@@ -55,6 +55,13 @@ message Location {
 
         // The timestamp of this given location / arrangement
         int64 timestamp = 6;
+
+        // The allowed quota for this location, if any
+        int32 quota = 7;
+}
+
+message LocationList {
+  repeated Location locations = 1;
 }
 
 message Organisation {
@@ -104,4 +111,5 @@ service OrganiserService {
         rpc GetOrganisation (Empty) returns (Organisation) {};
         rpc UpdateLocation (Location) returns (Location) {};
         rpc Diff (DiffRequest) returns (OrganisationMoves) {};
+        rpc GetQuotaViolations (Empty) returns (LocationList) {};
 }

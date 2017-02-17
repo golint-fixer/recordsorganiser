@@ -252,7 +252,7 @@ func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 
 func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
 	releases := s.bridge.getReleases(location.FolderIds)
-	retLocation := &pb.Location{Name: location.Name, Units: location.Units, FolderIds: location.FolderIds, Sort: location.Sort}
+	retLocation := &pb.Location{Name: location.Name, Units: location.Units, FolderIds: location.FolderIds, Sort: location.Sort, Quota: location.Quota}
 
 	switch location.Sort {
 	case pb.Location_BY_LABEL_CATNO:
@@ -318,4 +318,19 @@ func (s *Server) UpdateLocation(ctx context.Context, in *pb.Location) (*pb.Locat
 		}
 	}
 	return nil, errors.New("Cannot find location in org")
+}
+
+// GetQuotaViolations gets the quota violations for the whole collection
+func (s *Server) GetQuotaViolations(ctx context.Context, in *pb.Empty) (*pb.LocationList, error) {
+	violations := &pb.LocationList{}
+
+	for _, location := range s.org.Locations {
+		q := location.Quota
+		log.Printf("COMP %v and %v", q, location.GetReleasesLocation())
+		if q > 0 && len(location.GetReleasesLocation()) > int(q) {
+			violations.Locations = append(violations.Locations, location)
+		}
+	}
+
+	return violations, nil
 }
