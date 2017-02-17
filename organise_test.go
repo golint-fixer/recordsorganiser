@@ -384,6 +384,26 @@ func TestUpdateLocation(t *testing.T) {
 	}
 }
 
+func TestQuotaFail(t *testing.T) {
+	testServer := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	location := &pb.Location{
+		Name:      "TestName",
+		Units:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+		Quota:     2,
+	}
+
+	testServer.AddLocation(context.Background(), location)
+	violations, err := testServer.GetQuotaViolations(context.Background(), &pb.Empty{})
+	if err != nil {
+		t.Errorf("Error in getting quota: %v", err)
+	}
+	if len(violations.Locations) != 1 || violations.Locations[0].Name != "TestName" {
+		t.Errorf("Violations are not returned correctly: %v", violations)
+	}
+}
+
 func TestGetLocationFail(t *testing.T) {
 	testServer := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
 
