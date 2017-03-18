@@ -27,7 +27,7 @@ import (
 type prodBridge struct{}
 
 func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) *pbs.ReleaseMetadata {
-	ip, port := getIP("discogssyncer", "10.0.1.17", 50055)
+	ip, port := getIP("discogssyncer")
 	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 	defer conn.Close()
 	client := pbs.NewDiscogsServiceClient(conn)
@@ -43,7 +43,7 @@ func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
 		list.Folders = append(list.Folders, &pbd.Folder{Id: id})
 	}
 
-	ip, port := getIP("discogssyncer", "10.0.1.17", 50055)
+	ip, port := getIP("discogssyncer")
 	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 	defer conn.Close()
 	client := pbs.NewDiscogsServiceClient(conn)
@@ -57,7 +57,7 @@ func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
 func (discogsBridge prodBridge) getRelease(ID int32) *pbd.Release {
 	var result *pbd.Release
 
-	ip, port := getIP("discogssyncer", "10.0.1.17", 50055)
+	ip, port := getIP("discogssyncer")
 	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 	defer conn.Close()
 	client := pbs.NewDiscogsServiceClient(conn)
@@ -188,8 +188,8 @@ func InitServer(folder *string) Server {
 	return server
 }
 
-func getIP(servername string, ip string, port int) (string, int) {
-	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
+func getIP(servername string) (string, int) {
+	conn, _ := grpc.Dial("192.168.86.34:5055", grpc.WithInsecure())
 	defer conn.Close()
 
 	registry := pbdi.NewDiscoveryServiceClient(conn)
@@ -199,11 +199,7 @@ func getIP(servername string, ip string, port int) (string, int) {
 }
 
 func test() {
-	var host = flag.String("host", "10.0.1.17", "Hostname of server.")
-	var port = flag.String("port", "50055", "Port number of server")
-	flag.Parse()
-	portVal, _ := strconv.Atoi(*port)
-	dServer, dPort := getIP("discogssyncer", *host, portVal)
+	dServer, dPort := getIP("discogssyncer")
 
 	dConn, _ := grpc.Dial(dServer+":"+strconv.Itoa(dPort), grpc.WithInsecure())
 	defer dConn.Close()

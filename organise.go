@@ -187,7 +187,7 @@ func (s Server) runOrgSteps() {
 }
 
 func (s Server) moveOldRecordsToPile() {
-	ip, port := getIP("discogssyncer", "10.0.1.17", 50055)
+	ip, port := getIP("discogssyncer")
 	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 	defer conn.Close()
 	client := pbs.NewDiscogsServiceClient(conn)
