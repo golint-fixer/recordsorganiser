@@ -223,6 +223,11 @@ func test() {
 	}
 }
 
+// ReportHealth alerts if we're not healthy
+func (s Server) ReportHealth() bool {
+	return true
+}
+
 func main() {
 	var folder = flag.String("folder", "/home/simon/.discogsorg", "Location to store the records")
 	flag.Parse()
