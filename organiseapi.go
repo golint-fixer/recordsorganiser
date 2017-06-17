@@ -123,6 +123,11 @@ func (s Server) DoRegister(server *grpc.Server) {
 	pb.RegisterOrganiserServiceServer(server, &s)
 }
 
+// Mote promotes/demotes this server
+func (s Server) Mote(master bool) error {
+	return nil
+}
+
 func (s Server) save() {
 
 	// Always update the timestamp on a save
