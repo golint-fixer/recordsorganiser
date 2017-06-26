@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"log"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -252,7 +253,7 @@ func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 
 func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
 	releases := s.bridge.getReleases(location.FolderIds)
-	retLocation := &pb.Location{Name: location.Name, Units: location.Units, FolderIds: location.FolderIds, Sort: location.Sort, Quota: location.Quota}
+	retLocation := &pb.Location{Name: location.Name, Units: location.Units, FolderIds: location.FolderIds, Sort: location.Sort, Quota: location.Quota, ExpectedFormat: location.ExpectedFormat}
 
 	switch location.Sort {
 	case pb.Location_BY_LABEL_CATNO:
@@ -333,4 +334,38 @@ func (s *Server) GetQuotaViolations(ctx context.Context, in *pb.Empty) (*pb.Loca
 	}
 
 	return violations, nil
+}
+
+//CleanLocation reports infractions on a given location
+func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanList, error) {
+	var loc *pb.Location
+	for _, l := range s.org.GetLocations() {
+		if l.Name == in.Name {
+			loc = l
+		}
+	}
+
+	if loc == nil {
+		return nil, errors.New("Unable to find location " + in.Name)
+	}
+
+	list := &pb.CleanList{}
+	for _, entry := range loc.ReleasesLocation {
+		record := s.bridge.getRelease(entry.ReleaseId)
+		log.Printf("Got record %v from %v", record, entry)
+		match := false
+		for _, format := range record.GetFormats() {
+			m, _ := regexp.MatchString(loc.ExpectedFormat, format.Name)
+			log.Printf("MATCH = %v from %v with %v", m, loc.ExpectedFormat, format.Name)
+			if m {
+				match = true
+			}
+		}
+
+		if !match {
+			list.Entries = append(list.Entries, record)
+		}
+	}
+
+	return list, nil
 }

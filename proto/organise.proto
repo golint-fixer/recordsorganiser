@@ -58,6 +58,9 @@ message Location {
 
         // The allowed quota for this location, if any
         int32 quota = 7;
+
+        // The type of format we expect in this location
+        string expected_format = 8;
 }
 
 message LocationList {
@@ -102,6 +105,10 @@ message DiffRequest {
   int32 slot = 4;
 }
 
+message CleanList {
+  repeated godiscogs.Release entries = 1;
+}
+
 service OrganiserService {
         rpc Organise (Empty) returns (OrganisationMoves) {};
         rpc Locate (godiscogs.Release) returns (ReleaseLocation) {};
@@ -112,4 +119,5 @@ service OrganiserService {
         rpc UpdateLocation (Location) returns (Location) {};
         rpc Diff (DiffRequest) returns (OrganisationMoves) {};
         rpc GetQuotaViolations (Empty) returns (LocationList) {};
+        rpc CleanLocation (Location) returns (CleanList) {};
 }
