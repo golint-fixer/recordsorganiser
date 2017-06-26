@@ -35,16 +35,19 @@ func (discogsBridge testBridge) getReleases(folders []int32) []*pbd.Release {
 	result = append(result, &pbd.Release{
 		Id:             1,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "FirstLabel"}},
+		Formats:        []*pbd.Format{&pbd.Format{Name: "12"}},
 		FormatQuantity: 2,
 	})
 	result = append(result, &pbd.Release{
 		Id:             2,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "SecondLabel"}},
+		Formats:        []*pbd.Format{&pbd.Format{Name: "12"}},
 		FormatQuantity: 1,
 	})
 	result = append(result, &pbd.Release{
 		Id:             3,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "ThirdLabel"}},
+		Formats:        []*pbd.Format{&pbd.Format{Name: "CD"}},
 		FormatQuantity: 1,
 	})
 
@@ -52,7 +55,10 @@ func (discogsBridge testBridge) getReleases(folders []int32) []*pbd.Release {
 }
 
 func (discogsBridge testBridge) getRelease(ID int32) *pbd.Release {
-	return &pbd.Release{Id: ID}
+	if ID < 3 {
+		return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Name: "12"}}}
+	}
+	return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Name: "CD"}}}
 }
 
 func TestGetReleaseLocation(t *testing.T) {
@@ -340,6 +346,23 @@ func TestGetLocation(t *testing.T) {
 
 	if len(retr.FolderIds) == 0 || retr.FolderIds[0] != 10 {
 		t.Errorf("Folder Id has come back wrong: %v", retrLocation)
+	}
+}
+
+func TestCleanLocation(t *testing.T) {
+	testServer := &Server{saveLocation: ".testCleanLocation", bridge: testBridge{}, org: &pb.Organisation{}}
+	location := &pb.Location{
+		Name:           "TestName",
+		Units:          2,
+		FolderIds:      []int32{10},
+		Sort:           pb.Location_BY_LABEL_CATNO,
+		ExpectedFormat: "12",
+	}
+	testServer.AddLocation(context.Background(), location)
+
+	cleans, err := testServer.CleanLocation(context.Background(), location)
+	if err != nil || len(cleans.Entries) != 1 || cleans.Entries[0].Id != 3 {
+		t.Errorf("Cleaning error: %v, %v", cleans, err)
 	}
 }
 
