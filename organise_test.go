@@ -58,7 +58,7 @@ func (discogsBridge testBridge) getRelease(ID int32) *pbd.Release {
 	if ID < 3 {
 		return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Name: "12"}}}
 	}
-	return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Name: "CD"}}}
+	return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Name: "CD"}}, Labels: []*pbd.Label{&pbd.Label{Name: "Numero"}}}
 }
 
 func TestGetReleaseLocation(t *testing.T) {
@@ -357,6 +357,23 @@ func TestCleanLocation(t *testing.T) {
 		FolderIds:      []int32{10},
 		Sort:           pb.Location_BY_LABEL_CATNO,
 		ExpectedFormat: "12",
+	}
+	testServer.AddLocation(context.Background(), location)
+
+	cleans, err := testServer.CleanLocation(context.Background(), location)
+	if err != nil || len(cleans.Entries) != 1 || cleans.Entries[0].Id != 3 {
+		t.Errorf("Cleaning error: %v, %v", cleans, err)
+	}
+}
+
+func TestCleanLocationOfLabels(t *testing.T) {
+	testServer := &Server{saveLocation: ".testCleanLocation", bridge: testBridge{}, org: &pb.Organisation{}}
+	location := &pb.Location{
+		Name:            "TestName",
+		Units:           2,
+		FolderIds:       []int32{10},
+		Sort:            pb.Location_BY_LABEL_CATNO,
+		UnexpectedLabel: "Numero",
 	}
 	testServer.AddLocation(context.Background(), location)
 
