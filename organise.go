@@ -362,7 +362,15 @@ func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanL
 			}
 		}
 
-		if !match {
+		badlabel := false
+		for _, label := range record.GetLabels() {
+			m, _ := regexp.MatchString(loc.UnexpectedLabel, label.Name)
+			if m {
+				badlabel = true
+			}
+		}
+
+		if !match || badlabel {
 			list.Entries = append(list.Entries, record)
 		}
 	}

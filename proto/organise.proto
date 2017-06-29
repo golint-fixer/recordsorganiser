@@ -61,6 +61,9 @@ message Location {
 
         // The type of format we expect in this location
         string expected_format = 8;
+
+        // The type of label we don't expect in this location
+        string unexpected_label = 9;
 }
 
 message LocationList {
