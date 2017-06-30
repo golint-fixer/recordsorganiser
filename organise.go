@@ -253,7 +253,7 @@ func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 
 func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
 	releases := s.bridge.getReleases(location.FolderIds)
-	retLocation := &pb.Location{Name: location.Name, Units: location.Units, FolderIds: location.FolderIds, Sort: location.Sort, Quota: location.Quota, ExpectedFormat: location.ExpectedFormat}
+	retLocation := &pb.Location{Name: location.Name, Units: location.Units, FolderIds: location.FolderIds, Sort: location.Sort, Quota: location.Quota, ExpectedFormat: location.ExpectedFormat, UnexpectedLabel: location.UnexpectedLabel}
 
 	switch location.Sort {
 	case pb.Location_BY_LABEL_CATNO:
@@ -356,17 +356,21 @@ func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanL
 		match := false
 		for _, format := range record.GetFormats() {
 			m, _ := regexp.MatchString(loc.ExpectedFormat, format.Name)
-			log.Printf("MATCH = %v from %v with %v", m, loc.ExpectedFormat, format.Name)
+			log.Printf("MATCH_FORMAT = %v from %v with %v", m, loc.ExpectedFormat, format.Name)
 			if m {
 				match = true
 			}
 		}
 
 		badlabel := false
-		for _, label := range record.GetLabels() {
-			m, _ := regexp.MatchString(loc.UnexpectedLabel, label.Name)
-			if m {
-				badlabel = true
+		log.Printf("CHECKING %v", loc.UnexpectedLabel)
+		if len(loc.UnexpectedLabel) > 0 {
+			for _, label := range record.GetLabels() {
+				m, _ := regexp.MatchString(loc.UnexpectedLabel, label.Name)
+				log.Printf("MATCH_LABEL = %v from %v with %v", m, loc.UnexpectedLabel, label.Name)
+				if m {
+					badlabel = true
+				}
 			}
 		}
 
