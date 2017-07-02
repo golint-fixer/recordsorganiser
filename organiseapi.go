@@ -199,7 +199,13 @@ func getIP(servername string) (string, int) {
 
 	registry := pbdi.NewDiscoveryServiceClient(conn)
 	entry := pbdi.RegistryEntry{Name: servername}
-	r, _ := registry.Discover(context.Background(), &entry)
+	r, err := registry.Discover(context.Background(), &entry)
+
+	if err != nil {
+		log.Printf("Failed: %v", err)
+		return "", -1
+	}
+
 	return r.Ip, int(r.Port)
 }
 
