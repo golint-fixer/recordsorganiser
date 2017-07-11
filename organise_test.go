@@ -10,6 +10,7 @@ import (
 
 	pbs "github.com/brotherlogic/discogssyncer/server"
 	pbd "github.com/brotherlogic/godiscogs"
+	"github.com/brotherlogic/goserver"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 	"github.com/golang/protobuf/proto"
 )
@@ -62,7 +63,9 @@ func (discogsBridge testBridge) getRelease(ID int32) *pbd.Release {
 }
 
 func TestGetReleaseLocation(t *testing.T) {
-	testServer := &Server{saveLocation: ".testgetlocation", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testgetlocation", bridge: testBridge{}, org: &pb.Organisation{}}
+	log.Printf("HERE = %v", testServer)
+	testServer.SkipLog = true
 	location := &pb.Location{
 		Name:      "TestName",
 		Units:     2,
@@ -99,7 +102,8 @@ func TestGetReleaseLocation(t *testing.T) {
 }
 
 func TestListLocations(t *testing.T) {
-	testServer := &Server{saveLocation: ".testgetorgs", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testgetorgs", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.SkipLog = true
 	location := &pb.Location{
 		Name:      "TestName",
 		Units:     2,
@@ -128,7 +132,8 @@ func clean(s *Server) {
 }
 
 func TestGetOldLocation(t *testing.T) {
-	testServer := &Server{saveLocation: ".testdiff", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testdiff", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.SkipLog = true
 	clean(testServer)
 	location := &pb.Location{
 		Name:      "TestName",
@@ -171,7 +176,8 @@ func TestGetOldLocation(t *testing.T) {
 }
 
 func TestDiff(t *testing.T) {
-	testServer := &Server{saveLocation: ".testdiff", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testdiff", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.SkipLog = true
 	clean(testServer)
 	location := &pb.Location{
 		Name:      "TestName",
@@ -223,7 +229,8 @@ func TestDiff(t *testing.T) {
 }
 
 func TestGetOrganisations(t *testing.T) {
-	testServer := &Server{saveLocation: ".testgetorgs", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testgetorgs", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.SkipLog = true
 	clean(testServer)
 	testServer.save()
 
@@ -321,8 +328,8 @@ func TestIdentifySlotMovesCorrectly(t *testing.T) {
 }
 
 func TestGetLocation(t *testing.T) {
-	testServer := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
-
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.SkipLog = true
 	location := &pb.Location{
 		Name:      "TestName",
 		Units:     2,
@@ -332,7 +339,8 @@ func TestGetLocation(t *testing.T) {
 
 	testServer.AddLocation(context.Background(), location)
 
-	testServer2 := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer2 := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer2.SkipLog = true
 	testServer2.org = loadLatest(".testoutget")
 	retrLocation := &pb.Location{Name: "TestName"}
 	retr, err := testServer2.GetLocation(context.Background(), retrLocation)
@@ -350,7 +358,8 @@ func TestGetLocation(t *testing.T) {
 }
 
 func TestCleanLocation(t *testing.T) {
-	testServer := &Server{saveLocation: ".testCleanLocation", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testCleanLocation", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.SkipLog = true
 	location := &pb.Location{
 		Name:           "TestName",
 		Units:          2,
@@ -367,7 +376,8 @@ func TestCleanLocation(t *testing.T) {
 }
 
 func TestCleanLocationOfLabels(t *testing.T) {
-	testServer := &Server{saveLocation: ".testCleanLocation", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testCleanLocation", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.SkipLog = true
 	location := &pb.Location{
 		Name:            "TestName",
 		Units:           2,
@@ -384,7 +394,8 @@ func TestCleanLocationOfLabels(t *testing.T) {
 }
 
 func TestStraightClean(t *testing.T) {
-	testServer := &Server{saveLocation: ".testCleanLocation", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testCleanLocation", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.SkipLog = true
 	location := &pb.Location{
 		Name:      "TestName",
 		Units:     2,
@@ -400,8 +411,8 @@ func TestStraightClean(t *testing.T) {
 }
 
 func TestUpdateLocation(t *testing.T) {
-	testServer := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
-
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.SkipLog = true
 	location := &pb.Location{
 		Name:      "TestName",
 		Units:     2,
@@ -418,7 +429,8 @@ func TestUpdateLocation(t *testing.T) {
 	}
 	testServer.UpdateLocation(context.Background(), locationUpdate)
 
-	testServer2 := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer2 := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer2.SkipLog = true
 	testServer2.org = loadLatest(".testoutget")
 	retrLocation := &pb.Location{Name: "TestName"}
 	retr, err := testServer2.GetLocation(context.Background(), retrLocation)
@@ -441,7 +453,8 @@ func TestUpdateLocation(t *testing.T) {
 }
 
 func TestQuotaFail(t *testing.T) {
-	testServer := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.SkipLog = true
 	location := &pb.Location{
 		Name:      "TestName",
 		Units:     2,
@@ -461,8 +474,8 @@ func TestQuotaFail(t *testing.T) {
 }
 
 func TestGetLocationFail(t *testing.T) {
-	testServer := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
-
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.SkipLog = true
 	location2 := &pb.Location{
 		Name:      "TestName",
 		Units:     2,
@@ -472,7 +485,8 @@ func TestGetLocationFail(t *testing.T) {
 
 	testServer.AddLocation(context.Background(), location2)
 
-	testServer2 := &Server{saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer2 := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testoutget", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer2.SkipLog = true
 	testServer2.org = loadLatest(".testoutget")
 	retrLocation := &pb.Location{Name: "MadeUpName"}
 	_, err := testServer2.GetLocation(context.Background(), retrLocation)
@@ -482,8 +496,8 @@ func TestGetLocationFail(t *testing.T) {
 }
 
 func TestAddLocation(t *testing.T) {
-	testServer := &Server{saveLocation: ".testaddalocation", bridge: testBridge{}, org: &pb.Organisation{}}
-
+	testServer := &Server{GoServer: &goserver.GoServer{}, saveLocation: ".testaddalocation", bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer.SkipLog = true
 	location := &pb.Location{
 		Name:      "TestName",
 		Units:     2,
