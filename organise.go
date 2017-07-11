@@ -229,13 +229,14 @@ func (s *Server) Organise(ctx context.Context, in *pb.Empty) (*pb.OrganisationMo
 
 // GetLocation Gets an existing location
 func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Location, error) {
-
+	t := time.Now()
 	if location.Timestamp > 0 {
 		//Load up an old version
 		newOrg, _ := load(s.saveLocation, strconv.Itoa(int(location.Timestamp)))
 		for _, storedLocation := range newOrg.Locations {
 			if storedLocation.Name == location.Name {
 				log.Printf("Returning %v", storedLocation)
+				s.LogFunction("GetLocation-past", int32(time.Now().Sub(t).Nanoseconds()/1000000))
 				return storedLocation, nil
 			}
 		}
@@ -243,11 +244,13 @@ func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 		for _, storedLocation := range s.org.GetLocations() {
 			if storedLocation.Name == location.Name {
 				log.Printf("Returning %v", storedLocation)
+				s.LogFunction("GetLocation-curr", int32(time.Now().Sub(t).Nanoseconds()/1000000))
 				return storedLocation, nil
 			}
 		}
 	}
 
+	s.LogFunction("GetLocation-fail", int32(time.Now().Sub(t).Nanoseconds()/1000000))
 	return &pb.Location{}, errors.New("Cannot find location called " + location.Name)
 }
 
@@ -323,6 +326,7 @@ func (s *Server) UpdateLocation(ctx context.Context, in *pb.Location) (*pb.Locat
 
 // GetQuotaViolations gets the quota violations for the whole collection
 func (s *Server) GetQuotaViolations(ctx context.Context, in *pb.Empty) (*pb.LocationList, error) {
+	t := time.Now()
 	violations := &pb.LocationList{}
 
 	for _, location := range s.org.Locations {
@@ -333,11 +337,13 @@ func (s *Server) GetQuotaViolations(ctx context.Context, in *pb.Empty) (*pb.Loca
 		}
 	}
 
+	s.LogFunction("GetQuotaViolations", int32(time.Now().Sub(t).Nanoseconds()/1000000))
 	return violations, nil
 }
 
 //CleanLocation reports infractions on a given location
 func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanList, error) {
+	t := time.Now()
 	var loc *pb.Location
 	for _, l := range s.org.GetLocations() {
 		if l.Name == in.Name {
@@ -346,6 +352,7 @@ func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanL
 	}
 
 	if loc == nil {
+		s.LogFunction("CleanLocation-fail", int32(time.Now().Sub(t).Nanoseconds()/1000000))
 		return nil, errors.New("Unable to find location " + in.Name)
 	}
 
@@ -379,5 +386,6 @@ func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanL
 		}
 	}
 
+	s.LogFunction("CleanLocation", int32(time.Now().Sub(t).Nanoseconds()/1000000))
 	return list, nil
 }
