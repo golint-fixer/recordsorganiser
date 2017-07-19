@@ -245,6 +245,7 @@ func main() {
 	server := InitServer(folder)
 
 	server.PrepServer()
+	server.GoServer.Killme = false
 	server.RegisterServer("recordsorganiser", false)
 	server.Serve()
 }
