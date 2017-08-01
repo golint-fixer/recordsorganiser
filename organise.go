@@ -2,15 +2,11 @@ package main
 
 import (
 	"errors"
-	"io/ioutil"
 	"log"
 	"regexp"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
-
-	"google.golang.org/grpc"
 
 	"github.com/brotherlogic/diffmove"
 	"github.com/brotherlogic/goserver"
@@ -27,13 +23,15 @@ type Server struct {
 	*goserver.GoServer
 	saveLocation string
 	bridge       discogsBridge
-	org          *pb.Organisation
+	currOrg      *pb.Organisation
+	pastOrg      *pb.Organisation
 }
 
 type discogsBridge interface {
 	getReleases(folders []int32) []*pbd.Release
 	getRelease(ID int32) *pbd.Release
 	getMetadata(release *pbd.Release) *pbs.ReleaseMetadata
+	moveToFolder(releaseMove *pbs.ReleaseMove)
 }
 
 func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement, slot int, folder string) []*pb.LocationMove {
@@ -97,23 +95,14 @@ func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement, slot int
 // Diff computes the diff between two slot organisations
 func (s *Server) Diff(ctx context.Context, in *pb.DiffRequest) (*pb.OrganisationMoves, error) {
 
-	orgStart, err := load(s.saveLocation, strconv.Itoa(int(in.StartTimestamp)))
-	if err != nil {
-		return nil, err
-	}
-	orgEnd, err := load(s.saveLocation, strconv.Itoa(int(in.EndTimestamp)))
-	if err != nil {
-		return nil, err
-	}
-
 	var locStart *pb.Location
 	var locEnd *pb.Location
-	for _, location := range orgStart.Locations {
+	for _, location := range s.currOrg.Locations {
 		if location.Name == in.LocationName {
 			locStart = location
 		}
 	}
-	for _, location := range orgEnd.Locations {
+	for _, location := range s.pastOrg.Locations {
 		if location.Name == in.LocationName {
 			locEnd = location
 		}
@@ -126,8 +115,8 @@ func (s *Server) Diff(ctx context.Context, in *pb.DiffRequest) (*pb.Organisation
 	log.Printf("END = %v", locEnd.ReleasesLocation)
 	moves := getMoves(locStart.ReleasesLocation, locEnd.ReleasesLocation, int(in.Slot), in.LocationName)
 	res := &pb.OrganisationMoves{
-		StartTimestamp: in.StartTimestamp,
-		EndTimestamp:   in.EndTimestamp,
+		StartTimestamp: s.currOrg.Timestamp,
+		EndTimestamp:   s.pastOrg.Timestamp,
 		Moves:          moves,
 	}
 	return res, nil
@@ -135,14 +124,14 @@ func (s *Server) Diff(ctx context.Context, in *pb.DiffRequest) (*pb.Organisation
 
 // GetOrganisation Gets the current organisation
 func (s *Server) GetOrganisation(ctx context.Context, in *pb.Empty) (*pb.Organisation, error) {
-	return s.org, nil
+	return s.currOrg, nil
 }
 
 // Locate gets the location of a given release
 func (s *Server) Locate(ctx context.Context, in *pbd.Release) (*pb.ReleaseLocation, error) {
 	relLoc := &pb.ReleaseLocation{}
 	foundIndex := -1
-	for _, loc := range s.org.Locations {
+	for _, loc := range s.currOrg.Locations {
 		for _, rel := range loc.ReleasesLocation {
 			if rel.ReleaseId == in.Id {
 				foundIndex = int(rel.Index)
@@ -166,21 +155,7 @@ func (s *Server) Locate(ctx context.Context, in *pbd.Release) (*pb.ReleaseLocati
 		}
 	}
 
-	return relLoc, nil
-}
-
-// GetOrganisations Gets all the available organisations
-func (s *Server) GetOrganisations(ctx context.Context, in *pb.Empty) (*pb.OrganisationList, error) {
-	orgList := &pb.OrganisationList{}
-	files, _ := ioutil.ReadDir(s.saveLocation)
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".data") {
-			org, _ := load(s.saveLocation, file.Name()[0:len(file.Name())-5])
-			orgList.Organisations = append(orgList.Organisations, org)
-		}
-	}
-
-	return orgList, nil
+	return nil, errors.New("Unable to locate record with id " + strconv.Itoa(int(in.Id)))
 }
 
 func (s Server) runOrgSteps() {
@@ -188,23 +163,17 @@ func (s Server) runOrgSteps() {
 }
 
 func (s Server) moveOldRecordsToPile() {
-	ip, port := getIP("discogssyncer")
-	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
-	defer conn.Close()
-	client := pbs.NewDiscogsServiceClient(conn)
+	records := s.bridge.getReleases([]int32{673768})
 
-	records, err := client.GetReleasesInFolder(context.Background(), &pbs.FolderList{Folders: []*pbd.Folder{&pbd.Folder{Id: 673768}}})
-	if err != nil {
-		panic(err)
-	}
-
-	for _, record := range records.Releases {
-		meta, _ := client.GetMetadata(context.Background(), record)
+	for _, record := range records {
+		meta := s.bridge.getMetadata(record)
+		log.Printf("META := %v", meta.DateAdded)
 		if meta.DateAdded < (time.Now().AddDate(0, -3, 0).Unix()) {
+			log.Printf("RATING IS %v", record.Rating)
 			if record.Rating > 0 {
-				client.MoveToFolder(context.Background(), &pbs.ReleaseMove{Release: record, NewFolderId: 242017})
+				s.bridge.moveToFolder(&pbs.ReleaseMove{Release: record, NewFolderId: 242017})
 			} else {
-				client.MoveToFolder(context.Background(), &pbs.ReleaseMove{Release: record, NewFolderId: 812802})
+				s.bridge.moveToFolder(&pbs.ReleaseMove{Release: record, NewFolderId: 812802})
 			}
 		}
 	}
@@ -212,41 +181,29 @@ func (s Server) moveOldRecordsToPile() {
 
 // Organise Organises out the whole collection
 func (s *Server) Organise(ctx context.Context, in *pb.Empty) (*pb.OrganisationMoves, error) {
-	initialList := loadLatest(s.saveLocation)
 	s.runOrgSteps()
 	newList := &pb.Organisation{}
 
-	for _, folder := range initialList.Locations {
+	for _, folder := range s.currOrg.Locations {
 		newList.Locations = append(newList.Locations, s.arrangeLocation(folder))
 	}
 
-	diffs := compare(initialList, newList)
-	s.org = newList
+	diffs := compare(s.currOrg, newList)
+	s.pastOrg = s.currOrg
+	s.currOrg = newList
 	s.save()
 
-	return &pb.OrganisationMoves{StartTimestamp: initialList.Timestamp, EndTimestamp: s.org.Timestamp, Moves: diffs}, nil
+	return &pb.OrganisationMoves{StartTimestamp: s.pastOrg.Timestamp, EndTimestamp: s.currOrg.Timestamp, Moves: diffs}, nil
 }
 
 // GetLocation Gets an existing location
 func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Location, error) {
 	t := time.Now()
-	if location.Timestamp > 0 {
-		//Load up an old version
-		newOrg, _ := load(s.saveLocation, strconv.Itoa(int(location.Timestamp)))
-		for _, storedLocation := range newOrg.Locations {
-			if storedLocation.Name == location.Name {
-				log.Printf("Returning %v", storedLocation)
-				s.LogFunction("GetLocation-past", int32(time.Now().Sub(t).Nanoseconds()/1000000))
-				return storedLocation, nil
-			}
-		}
-	} else {
-		for _, storedLocation := range s.org.GetLocations() {
-			if storedLocation.Name == location.Name {
-				log.Printf("Returning %v", storedLocation)
-				s.LogFunction("GetLocation-curr", int32(time.Now().Sub(t).Nanoseconds()/1000000))
-				return storedLocation, nil
-			}
+	for _, storedLocation := range s.currOrg.GetLocations() {
+		if storedLocation.Name == location.Name {
+			log.Printf("Returning %v", storedLocation)
+			s.LogFunction("GetLocation-curr", int32(time.Now().Sub(t).Nanoseconds()/1000000))
+			return storedLocation, nil
 		}
 	}
 
@@ -300,23 +257,24 @@ func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
 func (s *Server) AddLocation(ctx context.Context, location *pb.Location) (*pb.Location, error) {
 	newLocation := s.arrangeLocation(location)
 	log.Printf("Appending %v", newLocation)
-	s.org.Locations = append(s.org.Locations, newLocation)
-	log.Printf("Result %v", s.org)
+	s.currOrg.Locations = append(s.currOrg.Locations, newLocation)
+	log.Printf("Result %v", s.currOrg)
 	s.save()
-	log.Printf("Saved %v from %v", s.org, s)
+	log.Printf("Saved %v from %v", s.currOrg, s)
 	return newLocation, nil
 }
 
 //UpdateLocation updates the location with new properties
 func (s *Server) UpdateLocation(ctx context.Context, in *pb.Location) (*pb.Location, error) {
-	log.Printf("Locations = %v but %v", s.org.Locations, in)
-	for i, loc := range s.org.Locations {
+	log.Printf("Locations = %v but %v", s.currOrg.Locations, in)
+	for i, loc := range s.currOrg.Locations {
 		if loc.Name == in.Name {
+			s.pastOrg = proto.Clone(s.currOrg).(*pb.Organisation)
 			proto.Merge(loc, in)
 			log.Printf("START ARRANGE %v -> %v", loc, in)
 			newLocation := s.arrangeLocation(loc)
 			log.Printf("NEW LOCATION: %v", newLocation)
-			s.org.Locations[i] = newLocation
+			s.currOrg.Locations[i] = newLocation
 			s.save()
 			return newLocation, nil
 		}
@@ -329,7 +287,7 @@ func (s *Server) GetQuotaViolations(ctx context.Context, in *pb.Empty) (*pb.Loca
 	t := time.Now()
 	violations := &pb.LocationList{}
 
-	for _, location := range s.org.Locations {
+	for _, location := range s.currOrg.Locations {
 		q := location.Quota
 		log.Printf("COMP %v and %v", q, location.GetReleasesLocation())
 		if q > 0 && len(location.GetReleasesLocation()) > int(q) {
@@ -345,7 +303,7 @@ func (s *Server) GetQuotaViolations(ctx context.Context, in *pb.Empty) (*pb.Loca
 func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanList, error) {
 	t := time.Now()
 	var loc *pb.Location
-	for _, l := range s.org.GetLocations() {
+	for _, l := range s.currOrg.GetLocations() {
 		if l.Name == in.Name {
 			loc = l
 		}
