@@ -2,25 +2,28 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"log"
-	"os"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
-	"golang.org/x/net/context"
-
-	"google.golang.org/grpc"
-
 	"github.com/brotherlogic/goserver"
-	"github.com/golang/protobuf/proto"
+	"github.com/brotherlogic/keystore/client"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 
 	pbs "github.com/brotherlogic/discogssyncer/server"
 	pbdi "github.com/brotherlogic/discovery/proto"
 	pbd "github.com/brotherlogic/godiscogs"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
+)
+
+const (
+	//CurrKey the current state of the collection
+	CurrKey = "/github.com/brotherlogic/recordsorganiser/curr"
+
+	//PrevKey the old state of the collection
+	PrevKey = "/github.com/brotherlogic/recordsorganiser/prev"
 )
 
 // Bridge that accesses discogs syncer server
@@ -33,6 +36,14 @@ func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) *pbs.ReleaseMetada
 	client := pbs.NewDiscogsServiceClient(conn)
 	meta, _ := client.GetMetadata(context.Background(), rel)
 	return meta
+}
+
+func (discogsBridge prodBridge) moveToFolder(move *pbs.ReleaseMove) {
+	ip, port := getIP("discogssyncer")
+	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
+	defer conn.Close()
+	client := pbs.NewDiscogsServiceClient(conn)
+	client.MoveToFolder(context.Background(), move)
 }
 
 func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
@@ -131,63 +142,42 @@ func (s Server) Mote(master bool) error {
 func (s Server) save() {
 
 	// Always update the timestamp on a save
-	s.org.Timestamp = time.Now().Unix()
-
-	if _, err := os.Stat(s.saveLocation); os.IsNotExist(err) {
-		os.MkdirAll(s.saveLocation, 0777)
-	}
-
-	data, _ := proto.Marshal(s.org)
-	ioutil.WriteFile(s.saveLocation+"/"+strconv.Itoa(int(time.Now().Unix()))+".data", data, 0644)
+	s.currOrg.Timestamp = time.Now().Unix()
+	s.KSclient.Save(CurrKey, s.currOrg)
+	s.KSclient.Save(PrevKey, s.pastOrg)
 }
 
-func load(folder string, timestamp string) (*pb.Organisation, error) {
-	org := &pb.Organisation{}
-	data, err := ioutil.ReadFile(folder + "/" + timestamp + ".data")
-
+func (s Server) load(key string) (*pb.Organisation, error) {
+	collection := &pb.Organisation{}
+	data, err := s.KSclient.Read(key, collection)
 	if err != nil {
 		return nil, err
 	}
 
-	proto.Unmarshal(data, org)
-	return org, nil
+	return data.(*pb.Organisation), nil
 }
 
-func loadLatest(folder string) *pb.Organisation {
-	bestNum := 0
-	files, err := ioutil.ReadDir(folder)
-
+func (s Server) loadLatest() error {
+	curr, err := s.load(CurrKey)
 	if err != nil {
-		log.Printf("Error: %v", err)
+		return err
+	}
+	past, err := s.load(PrevKey)
+	if err != nil {
+		return err
 	}
 
-	for _, file := range files {
-		start := strings.Split(file.Name(), ".")
-		num, err := strconv.Atoi(start[0])
-		if err != nil {
-			log.Printf("Failed on %v", file.Name())
-		} else {
-			if num > bestNum {
-				bestNum = num
-			}
-		}
-	}
-
-	if bestNum > 0 {
-		nOrg, _ := load(folder, strconv.Itoa(bestNum))
-		return nOrg
-	}
+	s.currOrg = curr
+	s.pastOrg = past
 
 	return nil
 }
 
 // InitServer builds an initial server
 func InitServer(folder *string) Server {
-	server := Server{&goserver.GoServer{}, *folder, prodBridge{}, &pb.Organisation{}}
-	latest := loadLatest(*folder)
-	if latest != nil {
-		server.org = loadLatest(*folder)
-	}
+	server := Server{&goserver.GoServer{}, *folder, prodBridge{}, &pb.Organisation{}, &pb.Organisation{}}
+	server.GoServer.KSclient = *keystoreclient.GetClient(getIP)
+	server.loadLatest()
 	server.Register = server
 
 	return server
@@ -245,7 +235,7 @@ func main() {
 	server := InitServer(folder)
 
 	server.PrepServer()
-	server.GoServer.Killme = false
+	server.GoServer.Killme = true
 	server.RegisterServer("recordsorganiser", false)
 	server.Serve()
 }
