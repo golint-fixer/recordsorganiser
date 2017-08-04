@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
 	"sort"
 	"strconv"
@@ -174,8 +175,8 @@ func (s Server) loadLatest() error {
 }
 
 // InitServer builds an initial server
-func InitServer(folder *string) Server {
-	server := Server{&goserver.GoServer{}, *folder, prodBridge{}, &pb.Organisation{}, &pb.Organisation{}}
+func InitServer() Server {
+	server := Server{&goserver.GoServer{}, prodBridge{}, &pb.Organisation{}, &pb.Organisation{}}
 	server.GoServer.KSclient = *keystoreclient.GetClient(getIP)
 	server.loadLatest()
 	server.Register = server
@@ -230,12 +231,20 @@ func (s Server) ReportHealth() bool {
 }
 
 func main() {
-	var folder = flag.String("folder", "/home/simon/.discogsorg", "Location to store the records")
+	var quiet = flag.Bool("quiet", true, "Show log output")
 	flag.Parse()
-	server := InitServer(folder)
+
+	if *quiet {
+		log.SetFlags(0)
+		log.SetOutput(ioutil.Discard)
+	}
+	log.Printf("Logging is on!")
+
+	server := InitServer()
 
 	server.PrepServer()
 	server.GoServer.Killme = true
 	server.RegisterServer("recordsorganiser", false)
+	log.Printf("Collection size: %v", len(server.currOrg.Locations))
 	server.Serve()
 }

@@ -21,10 +21,9 @@ import (
 // Server the configuration for the syncer
 type Server struct {
 	*goserver.GoServer
-	saveLocation string
-	bridge       discogsBridge
-	currOrg      *pb.Organisation
-	pastOrg      *pb.Organisation
+	bridge  discogsBridge
+	currOrg *pb.Organisation
+	pastOrg *pb.Organisation
 }
 
 type discogsBridge interface {

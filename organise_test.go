@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"testing"
 	"time"
 
@@ -204,10 +203,6 @@ func TestListLocations(t *testing.T) {
 	if org.Locations[0].Name != "TestName" {
 		t.Errorf("Location name is incorrect: %v", org.Locations[0])
 	}
-}
-
-func clean(s *Server) {
-	os.RemoveAll(s.saveLocation)
 }
 
 func TestCompareMoves(t *testing.T) {
@@ -528,7 +523,6 @@ func TestRateRecordInPile(t *testing.T) {
 func TestUpdateLocationFail(t *testing.T) {
 	testServer := getTestServer(".testdiff")
 	testServer.SkipLog = true
-	clean(testServer)
 	location := &pb.Location{
 		Name:      "TestName",
 		Units:     2,
@@ -551,7 +545,6 @@ func TestUpdateLocationFail(t *testing.T) {
 func TestDiff(t *testing.T) {
 	testServer := getTestServer(".testdiff")
 	testServer.SkipLog = true
-	clean(testServer)
 	location := &pb.Location{
 		Name:      "TestName",
 		Units:     2,
@@ -593,7 +586,6 @@ func TestDiff(t *testing.T) {
 func TestDiffFail(t *testing.T) {
 	testServer := getTestServer(".testdiff")
 	testServer.SkipLog = true
-	clean(testServer)
 	location := &pb.Location{
 		Name:      "TestName",
 		Units:     2,
