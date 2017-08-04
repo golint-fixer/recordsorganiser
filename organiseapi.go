@@ -158,7 +158,7 @@ func (s Server) load(key string) (*pb.Organisation, error) {
 	return data.(*pb.Organisation), nil
 }
 
-func (s Server) loadLatest() error {
+func (s *Server) loadLatest() error {
 	curr, err := s.load(CurrKey)
 	if err != nil {
 		return err
@@ -170,6 +170,8 @@ func (s Server) loadLatest() error {
 
 	s.currOrg = curr
 	s.pastOrg = past
+
+	log.Printf("LOADED %v", curr)
 
 	return nil
 }
@@ -245,6 +247,6 @@ func main() {
 	server.PrepServer()
 	server.GoServer.Killme = true
 	server.RegisterServer("recordsorganiser", false)
-	log.Printf("Collection size: %v", len(server.currOrg.Locations))
+	log.Printf("Collection size: %v -> %v", len(server.currOrg.Locations), server.currOrg)
 	server.Serve()
 }
