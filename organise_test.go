@@ -140,6 +140,45 @@ func getTestServerWithMove(dir string) *Server {
 	return testServer
 }
 
+func TestDeleteNonLocation(t *testing.T) {
+	testServer := getTestServer(".testgetreleaselocation")
+
+	_, err := testServer.DeleteLocation(context.Background(), &pb.Location{Name: "Made Up"})
+
+	if err == nil {
+		t.Errorf("Delete location has not returned an error")
+	}
+}
+
+func TestDeleteLocation(t *testing.T) {
+	testServer := getTestServer(".testgetreleaselocation")
+	location := &pb.Location{
+		Name:      "TestName",
+		Units:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+	testServer.AddLocation(context.Background(), location)
+
+	locations, err := testServer.GetOrganisation(context.Background(), &pb.Empty{})
+	if err != nil {
+		log.Fatalf("Unable to pull locations %v", err)
+	}
+	if len(locations.GetLocations()) != 1 {
+		t.Errorf("Location has not been added")
+	}
+
+	testServer.DeleteLocation(context.Background(), &pb.Location{Name: "TestName"})
+
+	locations, err = testServer.GetOrganisation(context.Background(), &pb.Empty{})
+	if err != nil {
+		log.Fatalf("Unable to pull locations %v", err)
+	}
+	if len(locations.GetLocations()) != 0 {
+		t.Errorf("Location has not been deleted")
+	}
+}
+
 func TestGetReleaseLocation(t *testing.T) {
 	testServer := getTestServer(".testgetreleaselocation")
 	log.Printf("HERE = %v", testServer)

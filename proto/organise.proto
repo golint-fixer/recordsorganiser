@@ -117,6 +117,7 @@ service OrganiserService {
         rpc GetLocation (Location) returns (Location) {};
         rpc GetOrganisation (Empty) returns (Organisation) {};
         rpc UpdateLocation (Location) returns (Location) {};
+        rpc DeleteLocation (Location) returns (Empty) {};
         rpc Diff (DiffRequest) returns (OrganisationMoves) {};
         rpc GetQuotaViolations (Empty) returns (LocationList) {};
         rpc CleanLocation (Location) returns (CleanList) {};
