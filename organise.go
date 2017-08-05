@@ -178,6 +178,20 @@ func (s Server) moveOldRecordsToPile() {
 	}
 }
 
+// DeleteLocation removes a location
+func (s *Server) DeleteLocation(ctx context.Context, in *pb.Location) (*pb.Empty, error) {
+	for i, folder := range s.currOrg.Locations {
+		if folder.GetName() == in.GetName() {
+			s.pastOrg = proto.Clone(s.currOrg).(*pb.Organisation)
+			s.currOrg.Locations = append(s.currOrg.Locations[:(i)], s.currOrg.Locations[(i)+1:]...)
+			s.save()
+			return &pb.Empty{}, nil
+		}
+	}
+
+	return nil, errors.New("Unable to locate " + in.GetName())
+}
+
 // Organise Organises out the whole collection
 func (s *Server) Organise(ctx context.Context, in *pb.Empty) (*pb.OrganisationMoves, error) {
 	s.runOrgSteps()
