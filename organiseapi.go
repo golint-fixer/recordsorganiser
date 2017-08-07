@@ -180,7 +180,12 @@ func (s *Server) loadLatest() error {
 func InitServer() Server {
 	server := Server{&goserver.GoServer{}, prodBridge{}, &pb.Organisation{}, &pb.Organisation{}}
 	server.GoServer.KSclient = *keystoreclient.GetClient(getIP)
-	server.loadLatest()
+	err := server.loadLatest()
+
+	if err != nil {
+		panic(err)
+	}
+
 	server.Register = server
 
 	return server
