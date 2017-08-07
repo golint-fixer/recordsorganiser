@@ -32,6 +32,14 @@ message ReleasePlacement {
         string folder = 6;
 }
 
+message Quota {
+  // The number of allowed units
+  int32 num_of_units = 1;
+
+  // The total width of the set
+  int32 total_width = 2;
+}
+
 message Location {
         // The name of the location
         string name = 1;
@@ -57,7 +65,7 @@ message Location {
         int64 timestamp = 6;
 
         // The allowed quota for this location, if any
-        int32 quota = 7;
+        Quota quota = 7;
 
         // The type of format we expect in this location
         string expected_format = 8;

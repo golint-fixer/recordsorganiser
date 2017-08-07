@@ -395,7 +395,7 @@ func TestQuotaFail(t *testing.T) {
 		Units:     2,
 		FolderIds: []int32{10},
 		Sort:      pb.Location_BY_LABEL_CATNO,
-		Quota:     2,
+		Quota:     &pb.Quota{NumOfUnits: 2},
 	}
 
 	testServer.AddLocation(context.Background(), location)
