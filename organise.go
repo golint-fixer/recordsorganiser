@@ -303,7 +303,7 @@ func (s *Server) GetQuotaViolations(ctx context.Context, in *pb.Empty) (*pb.Loca
 	for _, location := range s.currOrg.Locations {
 		q := location.Quota
 		log.Printf("COMP %v and %v", q, location.GetReleasesLocation())
-		if q > 0 && len(location.GetReleasesLocation()) > int(q) {
+		if q.NumOfUnits > 0 && len(location.GetReleasesLocation()) > int(q.NumOfUnits) {
 			violations.Locations = append(violations.Locations, location)
 		}
 	}
