@@ -128,6 +128,7 @@ func (s *Server) GetOrganisation(ctx context.Context, in *pb.Empty) (*pb.Organis
 
 // Locate gets the location of a given release
 func (s *Server) Locate(ctx context.Context, in *pbd.Release) (*pb.ReleaseLocation, error) {
+	t := time.Now()
 	relLoc := &pb.ReleaseLocation{}
 	foundIndex := -1
 	for _, loc := range s.currOrg.Locations {
@@ -150,10 +151,11 @@ func (s *Server) Locate(ctx context.Context, in *pbd.Release) (*pb.ReleaseLocati
 					}
 				}
 			}
+			s.LogFunction("Locate", int32(time.Now().Sub(t).Nanoseconds()/1000000))
 			return relLoc, nil
 		}
 	}
-
+	s.LogFunction("Locate-fail", int32(time.Now().Sub(t).Nanoseconds()/1000000))
 	return nil, errors.New("Unable to locate record with id " + strconv.Itoa(int(in.Id)))
 }
 
