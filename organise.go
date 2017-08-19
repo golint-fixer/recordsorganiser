@@ -151,11 +151,11 @@ func (s *Server) Locate(ctx context.Context, in *pbd.Release) (*pb.ReleaseLocati
 					}
 				}
 			}
-			s.LogFunction("Locate", int32(time.Now().Sub(t).Nanoseconds()/1000000))
+			s.LogFunction("Locate", t)
 			return relLoc, nil
 		}
 	}
-	s.LogFunction("Locate-fail", int32(time.Now().Sub(t).Nanoseconds()/1000000))
+	s.LogFunction("Locate-fail", t)
 	return nil, errors.New("Unable to locate record with id " + strconv.Itoa(int(in.Id)))
 }
 
@@ -217,12 +217,12 @@ func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 	for _, storedLocation := range s.currOrg.GetLocations() {
 		if storedLocation.Name == location.Name {
 			log.Printf("Returning %v", storedLocation)
-			s.LogFunction("GetLocation-curr", int32(time.Now().Sub(t).Nanoseconds()/1000000))
+			s.LogFunction("GetLocation-curr", t)
 			return storedLocation, nil
 		}
 	}
 
-	s.LogFunction("GetLocation-fail", int32(time.Now().Sub(t).Nanoseconds()/1000000))
+	s.LogFunction("GetLocation-fail", t)
 	return &pb.Location{}, errors.New("Cannot find location called " + location.Name)
 }
 
@@ -310,7 +310,7 @@ func (s *Server) GetQuotaViolations(ctx context.Context, in *pb.Empty) (*pb.Loca
 		}
 	}
 
-	s.LogFunction("GetQuotaViolations", int32(time.Now().Sub(t).Nanoseconds()/1000000))
+	s.LogFunction("GetQuotaViolations", t)
 	return violations, nil
 }
 
@@ -325,7 +325,7 @@ func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanL
 	}
 
 	if loc == nil {
-		s.LogFunction("CleanLocation-fail", int32(time.Now().Sub(t).Nanoseconds()/1000000))
+		s.LogFunction("CleanLocation-fail", t)
 		return nil, errors.New("Unable to find location " + in.Name)
 	}
 
@@ -359,6 +359,6 @@ func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanL
 		}
 	}
 
-	s.LogFunction("CleanLocation", int32(time.Now().Sub(t).Nanoseconds()/1000000))
+	s.LogFunction("CleanLocation", t)
 	return list, nil
 }
