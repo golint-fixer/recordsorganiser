@@ -4,7 +4,6 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
-	"sort"
 	"strconv"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 	"google.golang.org/grpc"
 
 	pbs "github.com/brotherlogic/discogssyncer/server"
-	pbdi "github.com/brotherlogic/discovery/proto"
 	pbd "github.com/brotherlogic/godiscogs"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 )
@@ -28,10 +26,16 @@ const (
 )
 
 // Bridge that accesses discogs syncer server
-type prodBridge struct{}
+type prodBridge struct {
+	Resolver func(string) (string, int)
+}
+
+func (discogsBridge prodBridge) GetIP(name string) (string, int) {
+	return discogsBridge.Resolver(name)
+}
 
 func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) *pbs.ReleaseMetadata {
-	ip, port := getIP("discogssyncer")
+	ip, port := discogsBridge.GetIP("discogssyncer")
 	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 	defer conn.Close()
 	client := pbs.NewDiscogsServiceClient(conn)
@@ -40,7 +44,7 @@ func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) *pbs.ReleaseMetada
 }
 
 func (discogsBridge prodBridge) moveToFolder(move *pbs.ReleaseMove) {
-	ip, port := getIP("discogssyncer")
+	ip, port := discogsBridge.GetIP("discogssyncer")
 	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 	defer conn.Close()
 	client := pbs.NewDiscogsServiceClient(conn)
@@ -55,7 +59,7 @@ func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
 		list.Folders = append(list.Folders, &pbd.Folder{Id: id})
 	}
 
-	ip, port := getIP("discogssyncer")
+	ip, port := discogsBridge.GetIP("discogssyncer")
 	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 	defer conn.Close()
 	client := pbs.NewDiscogsServiceClient(conn)
@@ -69,7 +73,7 @@ func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
 func (discogsBridge prodBridge) getRelease(ID int32) *pbd.Release {
 	var result *pbd.Release
 
-	ip, port := getIP("discogssyncer")
+	ip, port := discogsBridge.GetIP("discogssyncer")
 	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 	defer conn.Close()
 	client := pbs.NewDiscogsServiceClient(conn)
@@ -179,7 +183,8 @@ func (s *Server) loadLatest() error {
 // InitServer builds an initial server
 func InitServer() Server {
 	server := Server{&goserver.GoServer{}, prodBridge{}, &pb.Organisation{}, &pb.Organisation{}}
-	server.GoServer.KSclient = *keystoreclient.GetClient(getIP)
+	server.bridge = &prodBridge{Resolver: server.GetIP}
+	server.GoServer.KSclient = *keystoreclient.GetClient(server.GetIP)
 	err := server.loadLatest()
 
 	if err != nil {
@@ -189,47 +194,6 @@ func InitServer() Server {
 	server.Register = server
 
 	return server
-}
-
-func getIP(servername string) (string, int) {
-	conn, _ := grpc.Dial("192.168.86.64:50055", grpc.WithInsecure())
-	defer conn.Close()
-
-	registry := pbdi.NewDiscoveryServiceClient(conn)
-	entry := pbdi.RegistryEntry{Name: servername}
-	r, err := registry.Discover(context.Background(), &entry)
-
-	if err != nil {
-		log.Printf("Failed: %v", err)
-		return "", -1
-	}
-
-	return r.Ip, int(r.Port)
-}
-
-func test() {
-	dServer, dPort := getIP("discogssyncer")
-
-	dConn, _ := grpc.Dial(dServer+":"+strconv.Itoa(dPort), grpc.WithInsecure())
-	defer dConn.Close()
-	dClient := pbs.NewDiscogsServiceClient(dConn)
-
-	list := &pbs.FolderList{}
-	list.Folders = append(list.Folders, &pbd.Folder{Name: "12s"})
-
-	releases, err := dClient.GetReleasesInFolder(context.Background(), list)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	sort.Sort(pbd.ByLabelCat(releases.Releases))
-	splits := pbd.Split(releases.Releases, 8)
-	count := 1
-	for _, split := range splits[0] {
-		log.Printf("%v - %v", count, split.Title)
-		count++
-	}
 }
 
 // ReportHealth alerts if we're not healthy

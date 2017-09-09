@@ -21,6 +21,14 @@ type testBridgeMove struct {
 	move bool
 }
 
+func (discogsBridge testBridgeMove) GetIP(name string) (string, int) {
+	return "", -1
+}
+
+func (discogsBridge testBridge) GetIP(name string) (string, int) {
+	return "", -1
+}
+
 func (discogsBridge testBridge) getMetadata(rel *pbd.Release) *pbs.ReleaseMetadata {
 	metadata := &pbs.ReleaseMetadata{}
 	switch rel.Id {

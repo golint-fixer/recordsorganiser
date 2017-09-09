@@ -31,6 +31,7 @@ type discogsBridge interface {
 	getRelease(ID int32) *pbd.Release
 	getMetadata(release *pbd.Release) *pbs.ReleaseMetadata
 	moveToFolder(releaseMove *pbs.ReleaseMove)
+	GetIP(string) (string, int)
 }
 
 func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement, slot int, folder string) []*pb.LocationMove {
