@@ -183,6 +183,7 @@ func (s *Server) loadLatest() error {
 // InitServer builds an initial server
 func InitServer() Server {
 	server := Server{&goserver.GoServer{}, prodBridge{}, &pb.Organisation{}, &pb.Organisation{}}
+	server.PrepServer()
 	server.bridge = &prodBridge{Resolver: server.GetIP}
 	server.GoServer.KSclient = *keystoreclient.GetClient(server.GetIP)
 	err := server.loadLatest()
@@ -213,7 +214,6 @@ func main() {
 
 	server := InitServer()
 
-	server.PrepServer()
 	server.GoServer.Killme = true
 	server.RegisterServer("recordsorganiser", false)
 	log.Printf("Collection size: %v -> %v", len(server.currOrg.Locations), server.currOrg)
