@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"regexp"
 	"sort"
 	"strconv"
@@ -63,9 +62,8 @@ func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement, slot int
 			endNumbers[endRec.Index-1] = int(endRec.ReleaseId)
 		}
 	}
-	log.Printf("DIFFING %v -> %v", startNumbers, endNumbers)
+
 	diffMoves := diffmove.Diff(startNumbers, endNumbers)
-	log.Printf("RES: %v", diffMoves)
 	for _, move := range diffMoves {
 		switch move.Move {
 		case "Add":
@@ -78,7 +76,6 @@ func getMoves(start []*pb.ReleasePlacement, end []*pb.ReleasePlacement, slot int
 				Old: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1),
 					BeforeReleaseId: int32(move.StartPrior), AfterReleaseId: int32(move.StartFollow), Slot: int32(slot), Folder: folder},
 			})
-			log.Printf("WHAT = %v from %v", moves, move)
 		case "Move":
 			moves = append(moves, &pb.LocationMove{SlotMove: true,
 				Old: &pb.ReleasePlacement{ReleaseId: int32(move.Value), Index: int32(move.Start + 1),
@@ -111,8 +108,6 @@ func (s *Server) Diff(ctx context.Context, in *pb.DiffRequest) (*pb.Organisation
 	if locEnd == nil || locStart == nil {
 		return nil, errors.New("Unable to find location " + in.LocationName)
 	}
-	log.Printf("START = %v", locStart.ReleasesLocation)
-	log.Printf("END = %v", locEnd.ReleasesLocation)
 	moves := getMoves(locStart.ReleasesLocation, locEnd.ReleasesLocation, int(in.Slot), in.LocationName)
 	res := &pb.OrganisationMoves{
 		StartTimestamp: s.currOrg.Timestamp,
@@ -142,7 +137,6 @@ func (s *Server) Locate(ctx context.Context, in *pbd.Release) (*pb.ReleaseLocati
 		}
 		if foundIndex >= 0 {
 			for _, rel := range loc.ReleasesLocation {
-				log.Printf("%v -> %v", rel, foundIndex)
 				if rel.Slot == relLoc.Slot {
 					if int(rel.Index) == foundIndex-1 {
 						relLoc.Before = s.bridge.getRelease(rel.ReleaseId)
@@ -169,9 +163,7 @@ func (s Server) moveOldRecordsToPile() {
 
 	for _, record := range records {
 		meta := s.bridge.getMetadata(record)
-		log.Printf("META := %v", meta.DateAdded)
 		if meta.DateAdded < (time.Now().AddDate(0, -3, 0).Unix()) {
-			log.Printf("RATING IS %v", record.Rating)
 			if record.Rating > 0 {
 				s.bridge.moveToFolder(&pbs.ReleaseMove{Release: record, NewFolderId: 242017})
 			} else {
@@ -217,7 +209,6 @@ func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 	t := time.Now()
 	for _, storedLocation := range s.currOrg.GetLocations() {
 		if storedLocation.Name == location.Name {
-			log.Printf("Returning %v", storedLocation)
 			s.LogFunction("GetLocation-curr", t)
 			return storedLocation, nil
 		}
@@ -265,31 +256,24 @@ func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
 	}
 
 	retLocation.ReleasesLocation = locations
-	log.Printf("RETURNING: %v", retLocation)
 	return retLocation
 }
 
 // AddLocation Adds a new location to the organiser
 func (s *Server) AddLocation(ctx context.Context, location *pb.Location) (*pb.Location, error) {
 	newLocation := s.arrangeLocation(location)
-	log.Printf("Appending %v", newLocation)
 	s.currOrg.Locations = append(s.currOrg.Locations, newLocation)
-	log.Printf("Result %v", s.currOrg)
 	s.save()
-	log.Printf("Saved %v from %v", s.currOrg, s)
 	return newLocation, nil
 }
 
 //UpdateLocation updates the location with new properties
 func (s *Server) UpdateLocation(ctx context.Context, in *pb.Location) (*pb.Location, error) {
-	log.Printf("Locations = %v but %v", s.currOrg.Locations, in)
 	for i, loc := range s.currOrg.Locations {
 		if loc.Name == in.Name {
 			s.pastOrg = proto.Clone(s.currOrg).(*pb.Organisation)
 			proto.Merge(loc, in)
-			log.Printf("START ARRANGE %v -> %v", loc, in)
 			newLocation := s.arrangeLocation(loc)
-			log.Printf("NEW LOCATION: %v", newLocation)
 			s.currOrg.Locations[i] = newLocation
 			s.save()
 			return newLocation, nil
@@ -305,7 +289,6 @@ func (s *Server) GetQuotaViolations(ctx context.Context, in *pb.Empty) (*pb.Loca
 
 	for _, location := range s.currOrg.Locations {
 		q := location.Quota
-		log.Printf("COMP %v and %v", q, location.GetReleasesLocation())
 		if q.NumOfUnits > 0 && len(location.GetReleasesLocation()) > int(q.NumOfUnits) {
 			violations.Locations = append(violations.Locations, location)
 		}
@@ -333,22 +316,20 @@ func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanL
 	list := &pb.CleanList{}
 	for _, entry := range loc.ReleasesLocation {
 		record := s.bridge.getRelease(entry.ReleaseId)
-		log.Printf("Got record %v from %v", record, entry)
 		match := false
 		for _, format := range record.GetFormats() {
-			m, _ := regexp.MatchString(loc.ExpectedFormat, format.Name)
-			log.Printf("MATCH_FORMAT = %v from %v with %v", m, loc.ExpectedFormat, format.Name)
-			if m {
-				match = true
+			for _, desc := range format.Descriptions {
+				m, _ := regexp.MatchString(loc.ExpectedFormat, desc)
+				if m {
+					match = true
+				}
 			}
 		}
 
 		badlabel := false
-		log.Printf("CHECKING %v", loc.UnexpectedLabel)
 		if len(loc.UnexpectedLabel) > 0 {
 			for _, label := range record.GetLabels() {
 				m, _ := regexp.MatchString(loc.UnexpectedLabel, label.Name)
-				log.Printf("MATCH_LABEL = %v from %v with %v", m, loc.UnexpectedLabel, label.Name)
 				if m {
 					badlabel = true
 				}

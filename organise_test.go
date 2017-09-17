@@ -61,19 +61,19 @@ func (discogsBridge testBridge) getReleases(folders []int32) []*pbd.Release {
 	result = append(result, &pbd.Release{
 		Id:             1,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "FirstLabel"}},
-		Formats:        []*pbd.Format{&pbd.Format{Name: "12"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
 		FormatQuantity: 2,
 	})
 	result = append(result, &pbd.Release{
 		Id:             2,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "SecondLabel"}},
-		Formats:        []*pbd.Format{&pbd.Format{Name: "12"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
 		FormatQuantity: 1,
 	})
 	result = append(result, &pbd.Release{
 		Id:             3,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "ThirdLabel"}},
-		Formats:        []*pbd.Format{&pbd.Format{Name: "CD"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"CD"}}},
 		FormatQuantity: 1,
 	})
 
@@ -86,25 +86,25 @@ func (discogsBridge testBridgeMove) getReleases(folders []int32) []*pbd.Release 
 	result = append(result, &pbd.Release{
 		Id:             1,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "FirstLabel"}},
-		Formats:        []*pbd.Format{&pbd.Format{Name: "12"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
 		FormatQuantity: 2,
 	})
 	result = append(result, &pbd.Release{
 		Id:             2,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "SecondLabel"}},
-		Formats:        []*pbd.Format{&pbd.Format{Name: "12"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
 		FormatQuantity: 1,
 	})
 	result = append(result, &pbd.Release{
 		Id:             3,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "FourthLabel"}},
-		Formats:        []*pbd.Format{&pbd.Format{Name: "12"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
 		FormatQuantity: 1,
 	})
 	result = append(result, &pbd.Release{
 		Id:             4,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "ThirdLabel"}},
-		Formats:        []*pbd.Format{&pbd.Format{Name: "CD"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"CD"}}},
 		FormatQuantity: 1,
 		Rating:         5,
 	})
@@ -114,16 +114,16 @@ func (discogsBridge testBridgeMove) getReleases(folders []int32) []*pbd.Release 
 
 func (discogsBridge testBridge) getRelease(ID int32) *pbd.Release {
 	if ID < 3 {
-		return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Name: "12"}}, Labels: []*pbd.Label{&pbd.Label{Name: "SomethingElse"}}}
+		return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}}, Labels: []*pbd.Label{&pbd.Label{Name: "SomethingElse"}}}
 	}
-	return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Name: "CD"}}, Labels: []*pbd.Label{&pbd.Label{Name: "Numero"}}}
+	return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Descriptions: []string{"CD"}}}, Labels: []*pbd.Label{&pbd.Label{Name: "Numero"}}}
 }
 
 func (discogsBridge testBridgeMove) getRelease(ID int32) *pbd.Release {
 	if ID < 4 {
-		return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Name: "12"}}, Labels: []*pbd.Label{&pbd.Label{Name: "SomethingElse"}}}
+		return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}}, Labels: []*pbd.Label{&pbd.Label{Name: "SomethingElse"}}}
 	}
-	return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Name: "CD"}}, Labels: []*pbd.Label{&pbd.Label{Name: "Numero"}}}
+	return &pbd.Release{Id: ID, Formats: []*pbd.Format{&pbd.Format{Descriptions: []string{"CD"}}}, Labels: []*pbd.Label{&pbd.Label{Name: "Numero"}}}
 }
 
 func (discogsBridge testBridge) moveToFolder(move *pbs.ReleaseMove) {
