@@ -163,11 +163,13 @@ func (s Server) moveOldRecordsToPile() {
 
 	for _, record := range records {
 		meta := s.bridge.getMetadata(record)
-		if meta.DateAdded < (time.Now().AddDate(0, -3, 0).Unix()) {
-			if record.Rating > 0 {
-				s.bridge.moveToFolder(&pbs.ReleaseMove{Release: record, NewFolderId: 242017})
-			} else {
-				s.bridge.moveToFolder(&pbs.ReleaseMove{Release: record, NewFolderId: 812802})
+		if meta != nil {
+			if meta.DateAdded < (time.Now().AddDate(0, -3, 0).Unix()) {
+				if record.Rating > 0 {
+					s.bridge.moveToFolder(&pbs.ReleaseMove{Release: record, NewFolderId: 242017})
+				} else {
+					s.bridge.moveToFolder(&pbs.ReleaseMove{Release: record, NewFolderId: 812802})
+				}
 			}
 		}
 	}
