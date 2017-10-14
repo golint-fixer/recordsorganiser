@@ -231,8 +231,10 @@ func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
 		var combined []*pb.CombinedRelease
 		for _, release := range releases {
 			meta := s.bridge.getMetadata(release)
-			comb := &pb.CombinedRelease{Release: release, Metadata: meta}
-			combined = append(combined, comb)
+			if meta != nil && meta.DateAdded > 0 {
+				comb := &pb.CombinedRelease{Release: release, Metadata: meta}
+				combined = append(combined, comb)
+			}
 		}
 		sort.Sort(ByDateAdded(combined))
 		newReleases := make([]*pbd.Release, len(releases))
