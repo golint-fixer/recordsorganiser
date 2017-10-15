@@ -294,8 +294,10 @@ func (s *Server) GetQuotaViolations(ctx context.Context, in *pb.Empty) (*pb.Loca
 
 	for _, location := range s.currOrg.Locations {
 		q := location.Quota
-		if q.NumOfUnits > 0 && len(location.GetReleasesLocation()) > int(q.NumOfUnits) {
-			violations.Locations = append(violations.Locations, location)
+		if q != nil {
+			if q.NumOfUnits > 0 && len(location.GetReleasesLocation()) > int(q.NumOfUnits) {
+				violations.Locations = append(violations.Locations, location)
+			}
 		}
 	}
 
