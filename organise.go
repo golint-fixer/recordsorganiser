@@ -321,7 +321,7 @@ func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanL
 	list := &pb.CleanList{}
 	for _, entry := range loc.ReleasesLocation {
 		record := s.bridge.getRelease(entry.ReleaseId)
-		s.Log(fmt.Sprintf("Checking %v", record))
+		s.Log(fmt.Sprintf("Checking %v from %v", record, entry))
 		match := false
 		for _, format := range record.GetFormats() {
 			for _, desc := range format.Descriptions {
