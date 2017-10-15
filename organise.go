@@ -28,7 +28,7 @@ type Server struct {
 
 type discogsBridge interface {
 	getReleases(folders []int32) []*pbd.Release
-	getRelease(ID int32) *pbd.Release
+	getRelease(ID int32) (*pbd.Release, error)
 	getMetadata(release *pbd.Release) *pbs.ReleaseMetadata
 	moveToFolder(releaseMove *pbs.ReleaseMove)
 	GetIP(string) (string, int)
@@ -140,10 +140,10 @@ func (s *Server) Locate(ctx context.Context, in *pbd.Release) (*pb.ReleaseLocati
 			for _, rel := range loc.ReleasesLocation {
 				if rel.Slot == relLoc.Slot {
 					if int(rel.Index) == foundIndex-1 {
-						relLoc.Before = s.bridge.getRelease(rel.ReleaseId)
+						relLoc.Before, _ = s.bridge.getRelease(rel.ReleaseId)
 					}
 					if int(rel.Index) == foundIndex+1 {
-						relLoc.After = s.bridge.getRelease(rel.ReleaseId)
+						relLoc.After, _ = s.bridge.getRelease(rel.ReleaseId)
 					}
 				}
 			}
@@ -320,8 +320,8 @@ func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanL
 
 	list := &pb.CleanList{}
 	for _, entry := range loc.ReleasesLocation {
-		record := s.bridge.getRelease(entry.ReleaseId)
-		s.Log(fmt.Sprintf("Checking %v from %v", record, entry))
+		record, err := s.bridge.getRelease(entry.ReleaseId)
+		s.Log(fmt.Sprintf("Checking %v from %v given %v", record, entry, err))
 		match := false
 		for _, format := range record.GetFormats() {
 			for _, desc := range format.Descriptions {

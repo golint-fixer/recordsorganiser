@@ -61,6 +61,7 @@ func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
 
 	ip, port := discogsBridge.GetIP("discogssyncer")
 	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
+
 	defer conn.Close()
 	client := pbs.NewDiscogsServiceClient(conn)
 
@@ -70,14 +71,18 @@ func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
 	return result
 }
 
-func (discogsBridge prodBridge) getRelease(ID int32) *pbd.Release {
+func (discogsBridge prodBridge) getRelease(ID int32) (*pbd.Release, error) {
 	ip, port := discogsBridge.GetIP("discogssyncer")
-	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
+	conn, err := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
 	defer conn.Close()
 	client := pbs.NewDiscogsServiceClient(conn)
 
-	rel, _ := client.GetSingleRelease(context.Background(), &pbd.Release{Id: ID})
-	return rel
+	rel, err := client.GetSingleRelease(context.Background(), &pbd.Release{Id: ID})
+
+	return rel, err
 }
 
 func compare(collectionStart *pb.Organisation, collectionEnd *pb.Organisation) []*pb.LocationMove {
