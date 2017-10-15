@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"io/ioutil"
 	"log"
@@ -23,6 +24,9 @@ const (
 
 	//PrevKey the old state of the collection
 	PrevKey = "/github.com/brotherlogic/recordsorganiser/prev"
+
+	backoffTime = time.Second * 5
+	retries     = 5
 )
 
 // Bridge that accesses discogs syncer server
@@ -72,17 +76,22 @@ func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
 }
 
 func (discogsBridge prodBridge) getRelease(ID int32) (*pbd.Release, error) {
-	ip, port := discogsBridge.GetIP("discogssyncer")
-	conn, err := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
-	if err != nil {
-		return nil, err
+	for i := 0; i < retries; i++ {
+		ip, port := discogsBridge.GetIP("discogssyncer")
+		conn, err := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
+		if err == nil {
+
+			defer conn.Close()
+			client := pbs.NewDiscogsServiceClient(conn)
+
+			rel, err := client.GetSingleRelease(context.Background(), &pbd.Release{Id: ID})
+			if err == nil {
+				return rel, err
+			}
+		}
+		time.Sleep(backoffTime / time.Duration(retries))
 	}
-	defer conn.Close()
-	client := pbs.NewDiscogsServiceClient(conn)
-
-	rel, err := client.GetSingleRelease(context.Background(), &pbd.Release{Id: ID})
-
-	return rel, err
+	return nil, errors.New("Unable to reach discogs")
 }
 
 func compare(collectionStart *pb.Organisation, collectionEnd *pb.Organisation) []*pb.LocationMove {
