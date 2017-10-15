@@ -71,20 +71,13 @@ func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
 }
 
 func (discogsBridge prodBridge) getRelease(ID int32) *pbd.Release {
-	var result *pbd.Release
-
 	ip, port := discogsBridge.GetIP("discogssyncer")
 	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 	defer conn.Close()
 	client := pbs.NewDiscogsServiceClient(conn)
 
-	rel, _ := client.GetCollection(context.Background(), &pbs.Empty{})
-	for _, item := range rel.GetReleases() {
-		if item.Id == ID {
-			return item
-		}
-	}
-	return result
+	rel, _ := client.GetSingleRelease(context.Background(), &pbd.Release{Id: ID})
+	return rel
 }
 
 func compare(collectionStart *pb.Organisation, collectionEnd *pb.Organisation) []*pb.LocationMove {
