@@ -55,7 +55,7 @@ func (discogsBridge testBridgeMove) getMetadata(rel *pbd.Release) *pbs.ReleaseMe
 	return metadata
 }
 
-func (discogsBridge testBridge) getReleases(folders []int32) []*pbd.Release {
+func (discogsBridge testBridge) getReleases(folders []int32) ([]*pbd.Release, error) {
 	var result []*pbd.Release
 
 	result = append(result, &pbd.Release{
@@ -77,10 +77,10 @@ func (discogsBridge testBridge) getReleases(folders []int32) []*pbd.Release {
 		FormatQuantity: 1,
 	})
 
-	return result
+	return result, nil
 }
 
-func (discogsBridge testBridgeMove) getReleases(folders []int32) []*pbd.Release {
+func (discogsBridge testBridgeMove) getReleases(folders []int32) ([]*pbd.Release, error) {
 	var result []*pbd.Release
 
 	result = append(result, &pbd.Release{
@@ -109,7 +109,7 @@ func (discogsBridge testBridgeMove) getReleases(folders []int32) []*pbd.Release 
 		Rating:         5,
 	})
 
-	return result
+	return result, nil
 }
 
 func (discogsBridge testBridge) getRelease(ID int32) (*pbd.Release, error) {

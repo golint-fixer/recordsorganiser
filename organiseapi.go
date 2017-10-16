@@ -55,24 +55,33 @@ func (discogsBridge prodBridge) moveToFolder(move *pbs.ReleaseMove) {
 	client.MoveToFolder(context.Background(), move)
 }
 
-func (discogsBridge prodBridge) getReleases(folders []int32) []*pbd.Release {
-	var result []*pbd.Release
+func (discogsBridge prodBridge) getReleases(folders []int32) ([]*pbd.Release, error) {
+	for i := 0; i < retries; i++ {
+		var result []*pbd.Release
 
-	list := &pbs.FolderList{}
-	for _, id := range folders {
-		list.Folders = append(list.Folders, &pbd.Folder{Id: id})
+		list := &pbs.FolderList{}
+		for _, id := range folders {
+			list.Folders = append(list.Folders, &pbd.Folder{Id: id})
+		}
+
+		ip, port := discogsBridge.GetIP("discogssyncer")
+		conn, err := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
+
+		if err != nil {
+			defer conn.Close()
+			client := pbs.NewDiscogsServiceClient(conn)
+
+			rel, err := client.GetReleasesInFolder(context.Background(), list)
+			if err != nil {
+				result = rel.GetReleases()
+
+				return result, nil
+			}
+		}
+		time.Sleep(backoffTime)
 	}
 
-	ip, port := discogsBridge.GetIP("discogssyncer")
-	conn, _ := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
-
-	defer conn.Close()
-	client := pbs.NewDiscogsServiceClient(conn)
-
-	rel, _ := client.GetReleasesInFolder(context.Background(), list)
-	result = rel.GetReleases()
-
-	return result
+	return nil, errors.New("Unable to read releases")
 }
 
 func (discogsBridge prodBridge) getRelease(ID int32) (*pbd.Release, error) {
