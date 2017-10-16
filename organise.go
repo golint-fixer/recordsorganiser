@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"regexp"
 	"sort"
 	"strconv"
@@ -27,7 +28,7 @@ type Server struct {
 }
 
 type discogsBridge interface {
-	getReleases(folders []int32) []*pbd.Release
+	getReleases(folders []int32) ([]*pbd.Release, error)
 	getRelease(ID int32) (*pbd.Release, error)
 	getMetadata(release *pbd.Release) *pbs.ReleaseMetadata
 	moveToFolder(releaseMove *pbs.ReleaseMove)
@@ -160,7 +161,12 @@ func (s Server) runOrgSteps() {
 }
 
 func (s Server) moveOldRecordsToPile() {
-	records := s.bridge.getReleases([]int32{673768})
+	records, err := s.bridge.getReleases([]int32{673768})
+
+	if err != nil {
+		log.Printf("Error in getting releases")
+		return
+	}
 
 	for _, record := range records {
 		meta := s.bridge.getMetadata(record)
@@ -196,7 +202,11 @@ func (s *Server) Organise(ctx context.Context, in *pb.Empty) (*pb.OrganisationMo
 	newList := &pb.Organisation{}
 
 	for _, folder := range s.currOrg.Locations {
-		newList.Locations = append(newList.Locations, s.arrangeLocation(folder))
+		v, err := s.arrangeLocation(folder)
+		if err != nil {
+			return nil, err
+		}
+		newList.Locations = append(newList.Locations, v)
 	}
 
 	diffs := compare(s.currOrg, newList)
@@ -221,8 +231,13 @@ func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 	return &pb.Location{}, errors.New("Cannot find location called " + location.Name)
 }
 
-func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
-	releases := s.bridge.getReleases(location.FolderIds)
+func (s *Server) arrangeLocation(location *pb.Location) (*pb.Location, error) {
+	releases, err := s.bridge.getReleases(location.FolderIds)
+
+	if err != nil {
+		return nil, err
+	}
+
 	retLocation := &pb.Location{Name: location.Name, Units: location.Units, FolderIds: location.FolderIds, Sort: location.Sort, Quota: location.Quota, ExpectedFormat: location.ExpectedFormat, UnexpectedLabel: location.UnexpectedLabel}
 
 	switch location.Sort {
@@ -261,12 +276,15 @@ func (s *Server) arrangeLocation(location *pb.Location) *pb.Location {
 	}
 
 	retLocation.ReleasesLocation = locations
-	return retLocation
+	return retLocation, nil
 }
 
 // AddLocation Adds a new location to the organiser
 func (s *Server) AddLocation(ctx context.Context, location *pb.Location) (*pb.Location, error) {
-	newLocation := s.arrangeLocation(location)
+	newLocation, err := s.arrangeLocation(location)
+	if err != nil {
+		return nil, err
+	}
 	s.currOrg.Locations = append(s.currOrg.Locations, newLocation)
 	s.save()
 	return newLocation, nil
@@ -278,7 +296,10 @@ func (s *Server) UpdateLocation(ctx context.Context, in *pb.Location) (*pb.Locat
 		if loc.Name == in.Name {
 			s.pastOrg = proto.Clone(s.currOrg).(*pb.Organisation)
 			proto.Merge(loc, in)
-			newLocation := s.arrangeLocation(loc)
+			newLocation, err := s.arrangeLocation(loc)
+			if err != nil {
+				return nil, err
+			}
 			s.currOrg.Locations[i] = newLocation
 			s.save()
 			return newLocation, nil
