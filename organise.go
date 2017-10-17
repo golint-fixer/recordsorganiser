@@ -30,7 +30,7 @@ type Server struct {
 type discogsBridge interface {
 	getReleases(folders []int32) ([]*pbd.Release, error)
 	getRelease(ID int32) (*pbd.Release, error)
-	getMetadata(release *pbd.Release) *pbs.ReleaseMetadata
+	getMetadata(release *pbd.Release) (*pbs.ReleaseMetadata, error)
 	moveToFolder(releaseMove *pbs.ReleaseMove)
 	GetIP(string) (string, int)
 }
@@ -169,7 +169,11 @@ func (s Server) moveOldRecordsToPile() {
 	}
 
 	for _, record := range records {
-		meta := s.bridge.getMetadata(record)
+		meta, err := s.bridge.getMetadata(record)
+		if err != nil {
+			log.Printf("Error getting metadata")
+			return
+		}
 		if meta != nil {
 			if meta.DateAdded < (time.Now().AddDate(0, -3, 0).Unix()) {
 				if record.Rating > 0 {
@@ -246,7 +250,10 @@ func (s *Server) arrangeLocation(location *pb.Location) (*pb.Location, error) {
 	case pb.Location_BY_DATE_ADDED:
 		var combined []*pb.CombinedRelease
 		for _, release := range releases {
-			meta := s.bridge.getMetadata(release)
+			meta, err := s.bridge.getMetadata(release)
+			if err != nil {
+				return nil, err
+			}
 			if meta != nil && meta.DateAdded > 0 {
 				comb := &pb.CombinedRelease{Release: release, Metadata: meta}
 				combined = append(combined, comb)
