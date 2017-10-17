@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"testing"
 	"time"
@@ -14,6 +15,119 @@ import (
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 	"github.com/golang/protobuf/proto"
 )
+
+type testBridgeFail struct{}
+
+func (discogsBridge testBridgeFail) GetIP(name string) (string, int) {
+	return "", -1
+}
+
+func (discogsBridge testBridgeFail) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
+	return nil, errors.New("Built to fail")
+}
+func (discogsBridge testBridgeFail) getReleases(folders []int32) ([]*pbd.Release, error) {
+	return nil, errors.New("Built to fail")
+}
+func (discogsBridge testBridgeFail) getRelease(ID int32) (*pbd.Release, error) {
+	return nil, errors.New("Built to fail")
+}
+func (discogsBridge testBridgeFail) moveToFolder(move *pbs.ReleaseMove) {
+	//Do nothing
+}
+
+type testBridgePartialFail struct{}
+
+func (discogsBridge testBridgePartialFail) GetIP(name string) (string, int) {
+	return "", -1
+}
+
+func (discogsBridge testBridgePartialFail) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
+	return nil, errors.New("Built to fail")
+}
+func (discogsBridge testBridgePartialFail) getReleases(folders []int32) ([]*pbd.Release, error) {
+	var result []*pbd.Release
+
+	result = append(result, &pbd.Release{
+		Id:             1,
+		Labels:         []*pbd.Label{&pbd.Label{Name: "FirstLabel"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
+		FormatQuantity: 2,
+	})
+	result = append(result, &pbd.Release{
+		Id:             2,
+		Labels:         []*pbd.Label{&pbd.Label{Name: "SecondLabel"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
+		FormatQuantity: 1,
+	})
+	result = append(result, &pbd.Release{
+		Id:             3,
+		Labels:         []*pbd.Label{&pbd.Label{Name: "ThirdLabel"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"CD"}}},
+		FormatQuantity: 1,
+	})
+
+	return result, nil
+}
+func (discogsBridge testBridgePartialFail) getRelease(ID int32) (*pbd.Release, error) {
+	return nil, errors.New("Built to fail")
+}
+func (discogsBridge testBridgePartialFail) moveToFolder(move *pbs.ReleaseMove) {
+	//Do nothing
+}
+
+type testBridgeCleverFail struct{}
+
+func (discogsBridge testBridgeCleverFail) GetIP(name string) (string, int) {
+	return "", -1
+}
+
+func (discogsBridge testBridgeCleverFail) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
+	metadata := &pbs.ReleaseMetadata{}
+	switch rel.Id {
+	case 1:
+		metadata.DateAdded = time.Now().Unix()
+	case 2:
+		metadata.DateAdded = time.Now().Unix() - 100
+	case 3:
+		metadata.DateAdded = time.Now().Unix() + 100
+	}
+	return metadata, nil
+}
+func (discogsBridge testBridgeCleverFail) getReleases(folders []int32) ([]*pbd.Release, error) {
+	for _, fold := range folders {
+		if fold != 673768 {
+			return nil, errors.New("Built to fail")
+		}
+	}
+	var result []*pbd.Release
+
+	result = append(result, &pbd.Release{
+		Id:             1,
+		Labels:         []*pbd.Label{&pbd.Label{Name: "FirstLabel"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
+		FormatQuantity: 2,
+	})
+	result = append(result, &pbd.Release{
+		Id:             2,
+		Labels:         []*pbd.Label{&pbd.Label{Name: "SecondLabel"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
+		FormatQuantity: 1,
+	})
+	result = append(result, &pbd.Release{
+		Id:             3,
+		Labels:         []*pbd.Label{&pbd.Label{Name: "ThirdLabel"}},
+		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"CD"}}},
+		FormatQuantity: 1,
+	})
+
+	return result, nil
+}
+func (discogsBridge testBridgeCleverFail) getRelease(ID int32) (*pbd.Release, error) {
+	return nil, errors.New("Built to fail")
+}
+func (discogsBridge testBridgeCleverFail) moveToFolder(move *pbs.ReleaseMove) {
+	//Do nothing
+}
 
 type testBridge struct{}
 
@@ -138,6 +252,7 @@ func getTestServer(dir string) *Server {
 	testServer := &Server{GoServer: &goserver.GoServer{}, bridge: testBridge{}, currOrg: &pb.Organisation{}}
 	testServer.Register = testServer
 	testServer.GoServer.KSclient = *keystoreclient.GetTestClient(dir)
+	testServer.SkipLog = true
 	return testServer
 }
 
@@ -145,6 +260,7 @@ func getTestServerWithMove(dir string) *Server {
 	testServer := &Server{GoServer: &goserver.GoServer{}, bridge: testBridgeMove{}, currOrg: &pb.Organisation{}}
 	testServer.Register = testServer
 	testServer.GoServer.KSclient = *keystoreclient.GetTestClient(dir)
+	testServer.SkipLog = true
 	return testServer
 }
 
@@ -189,7 +305,6 @@ func TestDeleteLocation(t *testing.T) {
 
 func TestGetReleaseLocation(t *testing.T) {
 	testServer := getTestServer(".testgetreleaselocation")
-	log.Printf("HERE = %v", testServer)
 	testServer.SkipLog = true
 	location := &pb.Location{
 		Name:      "TestName",
@@ -342,6 +457,25 @@ func TestCleanLocation(t *testing.T) {
 	}
 }
 
+func TestCleanLocationFailNoSuchLocation(t *testing.T) {
+	testServer := getTestServer(".testCleanLocation")
+	testServer.SkipLog = true
+	location := &pb.Location{
+		Name:           "TestName",
+		Units:          2,
+		FolderIds:      []int32{10},
+		Sort:           pb.Location_BY_LABEL_CATNO,
+		ExpectedFormat: "12",
+	}
+	testServer.AddLocation(context.Background(), location)
+	testServer.bridge = testBridgeFail{}
+
+	_, err := testServer.CleanLocation(context.Background(), &pb.Location{Name: "MadeUpLocation"})
+	if err == nil {
+		t.Errorf("No cleaning error: %v", err)
+	}
+}
+
 func TestCleanLocationFail(t *testing.T) {
 	testServer := getTestServer(".testCleanLocation")
 	testServer.SkipLog = true
@@ -353,8 +487,9 @@ func TestCleanLocationFail(t *testing.T) {
 		ExpectedFormat: "12",
 	}
 	testServer.AddLocation(context.Background(), location)
+	testServer.bridge = testBridgeFail{}
 
-	_, err := testServer.CleanLocation(context.Background(), &pb.Location{Name: "MadeUpName"})
+	_, err := testServer.CleanLocation(context.Background(), location)
 	if err == nil {
 		t.Errorf("No cleaning error: %v", err)
 	}
@@ -413,6 +548,40 @@ func TestQuotaFail(t *testing.T) {
 	}
 	if len(violations.Locations) != 1 || violations.Locations[0].Name != "TestName" {
 		t.Errorf("Violations are not returned correctly: %v", violations)
+	}
+}
+
+func TestAddLocationFail(t *testing.T) {
+	testServer := getTestServer(".testAddLocation")
+	testServer.SkipLog = true
+	location := &pb.Location{
+		Name:      "TestName",
+		Units:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_RELEASE_DATE,
+	}
+
+	testServer.bridge = testBridgeFail{}
+	_, err := testServer.AddLocation(context.Background(), location)
+	if err == nil {
+		t.Errorf("Add Location has not failed!: %v", err)
+	}
+}
+
+func TestAddLocationFailOnDate(t *testing.T) {
+	testServer := getTestServer(".testAddLocation")
+	testServer.SkipLog = true
+	location := &pb.Location{
+		Name:      "TestName",
+		Units:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_DATE_ADDED,
+	}
+
+	testServer.bridge = testBridgePartialFail{}
+	_, err := testServer.AddLocation(context.Background(), location)
+	if err == nil {
+		t.Errorf("Add Location has not failed!: %v", err)
 	}
 }
 
@@ -546,6 +715,57 @@ func TestOverallOrg(t *testing.T) {
 	}
 }
 
+func TestOverallOrgFail(t *testing.T) {
+	testServer := getTestServer(".testOverallOrg")
+	location := &pb.Location{
+		Name:      "TestName",
+		Units:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+	testServer.AddLocation(context.Background(), location)
+
+	testServer.bridge = testBridgeFail{}
+	_, err := testServer.Organise(context.Background(), &pb.Empty{})
+	if err == nil {
+		log.Fatalf("No errors on basic failing org")
+	}
+}
+
+func TestOverallOrgPartialFail(t *testing.T) {
+	testServer := getTestServer(".testOverallOrg")
+	location := &pb.Location{
+		Name:      "TestName",
+		Units:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+	testServer.AddLocation(context.Background(), location)
+
+	testServer.bridge = testBridgeCleverFail{}
+	_, err := testServer.Organise(context.Background(), &pb.Empty{})
+	if err == nil {
+		log.Fatalf("No errors on partial failing org")
+	}
+}
+
+func TestOverallOrgEarlyFail(t *testing.T) {
+	testServer := getTestServer(".testOverallOrg")
+	location := &pb.Location{
+		Name:      "TestName",
+		Units:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+	testServer.AddLocation(context.Background(), location)
+
+	testServer.bridge = testBridgePartialFail{}
+	_, err := testServer.Organise(context.Background(), &pb.Empty{})
+	if err == nil {
+		log.Fatalf("No errors on partial failing org")
+	}
+}
+
 func TestRateRecordInPile(t *testing.T) {
 	testServer := getTestServerWithMove(".testOverallOrg")
 
@@ -567,6 +787,29 @@ func TestRateRecordInPile(t *testing.T) {
 	}
 }
 
+func TestUpdateLocationFailWithFailingThing(t *testing.T) {
+	testServer := getTestServer(".testdiff")
+	testServer.SkipLog = true
+	location := &pb.Location{
+		Name:      "TestName",
+		Units:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+
+	testServer.AddLocation(context.Background(), location)
+	locationUpdate := &pb.Location{
+		Sort: pb.Location_BY_DATE_ADDED,
+		Name: "TestName",
+	}
+	//Wait 2 seconds to let the timestamps change
+	time.Sleep(time.Second * 2)
+	testServer.bridge = testBridgeFail{}
+	_, err := testServer.UpdateLocation(context.Background(), locationUpdate)
+	if err == nil {
+		t.Errorf("Update location has not failed")
+	}
+}
 func TestUpdateLocationFail(t *testing.T) {
 	testServer := getTestServer(".testdiff")
 	testServer.SkipLog = true
@@ -621,7 +864,6 @@ func TestDiff(t *testing.T) {
 	}
 
 	//Validate the move
-	log.Printf("MOVE = %v", moves)
 	if moves.Moves[0].Old.Slot != 1 {
 		t.Errorf("Slot rep is wrong")
 	}
@@ -661,7 +903,6 @@ func TestDiffFail(t *testing.T) {
 
 func TestGetReleaseLocationFull(t *testing.T) {
 	testServer := getTestServerWithMove(".testgetreleaselocation")
-	log.Printf("HERE = %v", testServer)
 	testServer.SkipLog = true
 	location := &pb.Location{
 		Name:      "TestName",
@@ -695,7 +936,6 @@ func TestGetReleaseLocationFull(t *testing.T) {
 
 func TestGetReleaseLocationFail(t *testing.T) {
 	testServer := getTestServerWithMove(".testgetreleaselocation")
-	log.Printf("HERE = %v", testServer)
 	testServer.SkipLog = true
 	location := &pb.Location{
 		Name:      "TestName",
