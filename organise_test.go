@@ -29,7 +29,7 @@ func (discogsBridge testBridge) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridge) getMetadata(rel *pbd.Release) *pbs.ReleaseMetadata {
+func (discogsBridge testBridge) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
 	metadata := &pbs.ReleaseMetadata{}
 	switch rel.Id {
 	case 1:
@@ -39,10 +39,10 @@ func (discogsBridge testBridge) getMetadata(rel *pbd.Release) *pbs.ReleaseMetada
 	case 3:
 		metadata.DateAdded = time.Now().Unix() + 100
 	}
-	return metadata
+	return metadata, nil
 }
 
-func (discogsBridge testBridgeMove) getMetadata(rel *pbd.Release) *pbs.ReleaseMetadata {
+func (discogsBridge testBridgeMove) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
 	metadata := &pbs.ReleaseMetadata{}
 	switch rel.Id {
 	case 1:
@@ -52,7 +52,7 @@ func (discogsBridge testBridgeMove) getMetadata(rel *pbd.Release) *pbs.ReleaseMe
 	case 3:
 		metadata.DateAdded = time.Now().AddDate(0, -4, 0).Unix()
 	}
-	return metadata
+	return metadata, nil
 }
 
 func (discogsBridge testBridge) getReleases(folders []int32) ([]*pbd.Release, error) {
