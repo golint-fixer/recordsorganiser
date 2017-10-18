@@ -156,23 +156,21 @@ func (s *Server) Locate(ctx context.Context, in *pbd.Release) (*pb.ReleaseLocati
 	return nil, errors.New("Unable to locate record with id " + strconv.Itoa(int(in.Id)))
 }
 
-func (s Server) runOrgSteps() {
-	s.moveOldRecordsToPile()
+func (s Server) runOrgSteps() error {
+	return s.moveOldRecordsToPile()
 }
 
-func (s Server) moveOldRecordsToPile() {
+func (s Server) moveOldRecordsToPile() error {
 	records, err := s.bridge.getReleases([]int32{673768})
 
 	if err != nil {
-		log.Printf("Error in getting releases")
-		return
+		return err
 	}
 
 	for _, record := range records {
 		meta, err := s.bridge.getMetadata(record)
 		if err != nil {
-			log.Printf("Error getting metadata")
-			return
+			return err
 		}
 		if meta != nil {
 			if meta.DateAdded < (time.Now().AddDate(0, -3, 0).Unix()) {
@@ -184,6 +182,8 @@ func (s Server) moveOldRecordsToPile() {
 			}
 		}
 	}
+
+	return nil
 }
 
 // DeleteLocation removes a location
@@ -202,7 +202,11 @@ func (s *Server) DeleteLocation(ctx context.Context, in *pb.Location) (*pb.Empty
 
 // Organise Organises out the whole collection
 func (s *Server) Organise(ctx context.Context, in *pb.Empty) (*pb.OrganisationMoves, error) {
-	s.runOrgSteps()
+	err := s.runOrgSteps()
+	log.Printf("ORG FAIL: %v", err)
+	if err != nil {
+		return nil, err
+	}
 	newList := &pb.Organisation{}
 
 	for _, folder := range s.currOrg.Locations {
@@ -352,8 +356,8 @@ func (s *Server) CleanLocation(ctx context.Context, in *pb.Location) (*pb.CleanL
 	list := &pb.CleanList{}
 	for _, entry := range loc.ReleasesLocation {
 		record, err := s.bridge.getRelease(entry.ReleaseId)
-		if record == nil {
-			s.Log(fmt.Sprintf("Checking %v from %v given %v", record, entry, err))
+		if err != nil {
+			return nil, err
 		}
 		match := false
 		for _, format := range record.GetFormats() {
