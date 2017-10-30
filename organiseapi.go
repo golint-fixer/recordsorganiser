@@ -40,21 +40,24 @@ func (discogsBridge prodBridge) GetIP(name string) (string, int) {
 }
 
 func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
+	err := errors.New("First pass Fail")
 	for i := 0; i < retries; i++ {
 		ip, port := discogsBridge.GetIP("discogssyncer")
-		conn, err := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
-		if err == nil {
+		conn, err2 := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
+		err = err2
+		if err2 == nil {
 			defer conn.Close()
 			client := pbs.NewDiscogsServiceClient(conn)
-			meta, err := client.GetMetadata(context.Background(), rel)
-			if err == nil {
+			meta, err3 := client.GetMetadata(context.Background(), rel)
+			err = err3
+			if err3 == nil {
 				return meta, nil
 			}
 		}
 		time.Sleep(backoffTime)
 	}
 
-	return nil, errors.New("Unable to get release metadata")
+	return nil, fmt.Errorf("Unable to get release metadata: %v", err)
 }
 
 func (discogsBridge prodBridge) moveToFolder(move *pbs.ReleaseMove) {
