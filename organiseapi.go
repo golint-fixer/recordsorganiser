@@ -79,15 +79,14 @@ func (discogsBridge prodBridge) getReleases(folders []int32) ([]*pbd.Release, er
 		conn, err2 := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 		err = err2
 
-		if err != nil {
+		if err == nil {
 			defer conn.Close()
 			client := pbs.NewDiscogsServiceClient(conn)
 
 			rel, err3 := client.GetReleasesInFolder(context.Background(), list)
 			err = err3
-			if err != nil {
+			if err == nil {
 				result = rel.GetReleases()
-
 				return result, nil
 			}
 		}
