@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"strconv"
@@ -65,6 +66,7 @@ func (discogsBridge prodBridge) moveToFolder(move *pbs.ReleaseMove) {
 }
 
 func (discogsBridge prodBridge) getReleases(folders []int32) ([]*pbd.Release, error) {
+	err := errors.New("First Pass Fail")
 	for i := 0; i < retries; i++ {
 		var result []*pbd.Release
 
@@ -74,13 +76,15 @@ func (discogsBridge prodBridge) getReleases(folders []int32) ([]*pbd.Release, er
 		}
 
 		ip, port := discogsBridge.GetIP("discogssyncer")
-		conn, err := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
+		conn, err2 := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
+		err = err2
 
 		if err != nil {
 			defer conn.Close()
 			client := pbs.NewDiscogsServiceClient(conn)
 
-			rel, err := client.GetReleasesInFolder(context.Background(), list)
+			rel, err3 := client.GetReleasesInFolder(context.Background(), list)
+			err = err3
 			if err != nil {
 				result = rel.GetReleases()
 
@@ -90,7 +94,7 @@ func (discogsBridge prodBridge) getReleases(folders []int32) ([]*pbd.Release, er
 		time.Sleep(backoffTime)
 	}
 
-	return nil, errors.New("Unable to read releases")
+	return nil, fmt.Errorf("Unable to read releases: %v", err)
 }
 
 func (discogsBridge prodBridge) getRelease(ID int32) (*pbd.Release, error) {
