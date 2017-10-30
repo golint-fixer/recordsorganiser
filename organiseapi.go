@@ -43,11 +43,11 @@ func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetad
 	for i := 0; i < retries; i++ {
 		ip, port := discogsBridge.GetIP("discogssyncer")
 		conn, err := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
-		if err != nil {
+		if err == nil {
 			defer conn.Close()
 			client := pbs.NewDiscogsServiceClient(conn)
 			meta, err := client.GetMetadata(context.Background(), rel)
-			if err != nil {
+			if err == nil {
 				return meta, nil
 			}
 		}
