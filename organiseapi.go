@@ -16,6 +16,7 @@ import (
 
 	pbs "github.com/brotherlogic/discogssyncer/server"
 	pbd "github.com/brotherlogic/godiscogs"
+	pbgs "github.com/brotherlogic/goserver/proto"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 )
 
@@ -172,7 +173,12 @@ func (s Server) DoRegister(server *grpc.Server) {
 
 // Mote promotes/demotes this server
 func (s Server) Mote(master bool) error {
-	return nil
+	return s.loadLatest()
+}
+
+// GetState gets the state of the server
+func (s Server) GetState() []*pbgs.State {
+	return []*pbgs.State{}
 }
 
 func (s Server) save() {
@@ -217,11 +223,6 @@ func InitServer() Server {
 	server.PrepServer()
 	server.bridge = &prodBridge{Resolver: server.GetIP}
 	server.GoServer.KSclient = *keystoreclient.GetClient(server.GetIP)
-	err := server.loadLatest()
-
-	if err != nil {
-		panic(err)
-	}
 
 	server.Register = server
 
