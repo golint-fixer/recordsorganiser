@@ -191,7 +191,7 @@ func (s Server) save() {
 
 func (s Server) load(key string) (*pb.Organisation, error) {
 	collection := &pb.Organisation{}
-	data, err := s.KSclient.Read(key, collection)
+	data, _, err := s.KSclient.Read(key, collection)
 	if err != nil {
 		return nil, err
 	}
