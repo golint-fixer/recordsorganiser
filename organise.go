@@ -28,7 +28,7 @@ type Server struct {
 }
 
 type discogsBridge interface {
-	getReleases(folders []int32) ([]*pbd.Release, error)
+	getReleases(folders []int32) ([]*pbs.Record, error)
 	getRelease(ID int32) (*pbd.Release, error)
 	getMetadata(release *pbd.Release) (*pbs.ReleaseMetadata, error)
 	moveToFolder(releaseMove *pbs.ReleaseMove)
@@ -168,16 +168,13 @@ func (s Server) moveOldRecordsToPile() error {
 	}
 
 	for _, record := range records {
-		meta, err := s.bridge.getMetadata(record)
-		if err != nil {
-			return err
-		}
+		meta := record.GetMetadata()
 		if meta != nil {
 			if meta.DateAdded < (time.Now().AddDate(0, -3, 0).Unix()) {
-				if record.Rating > 0 {
-					s.bridge.moveToFolder(&pbs.ReleaseMove{Release: record, NewFolderId: 242017})
+				if record.GetRelease().Rating > 0 {
+					s.bridge.moveToFolder(&pbs.ReleaseMove{Release: record.GetRelease(), NewFolderId: 242017})
 				} else {
-					s.bridge.moveToFolder(&pbs.ReleaseMove{Release: record, NewFolderId: 812802})
+					s.bridge.moveToFolder(&pbs.ReleaseMove{Release: record.GetRelease(), NewFolderId: 812802})
 				}
 			}
 		}
@@ -240,10 +237,15 @@ func (s *Server) GetLocation(ctx context.Context, location *pb.Location) (*pb.Lo
 }
 
 func (s *Server) arrangeLocation(location *pb.Location) (*pb.Location, error) {
-	releases, err := s.bridge.getReleases(location.FolderIds)
+	records, err := s.bridge.getReleases(location.FolderIds)
 
 	if err != nil {
 		return nil, err
+	}
+
+	releases := make([]*pbd.Release, 0)
+	for _, r := range records {
+		releases = append(releases, r.GetRelease())
 	}
 
 	retLocation := &pb.Location{Name: location.Name, Units: location.Units, FolderIds: location.FolderIds, Sort: location.Sort, Quota: location.Quota, ExpectedFormat: location.ExpectedFormat, UnexpectedLabel: location.UnexpectedLabel}
