@@ -69,10 +69,10 @@ func (discogsBridge prodBridge) moveToFolder(move *pbs.ReleaseMove) {
 	client.MoveToFolder(context.Background(), move)
 }
 
-func (discogsBridge prodBridge) getReleases(folders []int32) ([]*pbd.Release, error) {
+func (discogsBridge prodBridge) getReleases(folders []int32) ([]*pbs.Record, error) {
 	err := errors.New("First Pass Fail")
 	for i := 0; i < retries; i++ {
-		var result []*pbd.Release
+		var result []*pbs.Record
 
 		list := &pbs.FolderList{}
 		for _, id := range folders {
@@ -90,7 +90,7 @@ func (discogsBridge prodBridge) getReleases(folders []int32) ([]*pbd.Release, er
 			rel, err3 := client.GetReleasesInFolder(context.Background(), list)
 			err = err3
 			if err == nil {
-				result = rel.GetReleases()
+				result = rel.GetRecords()
 				return result, nil
 			}
 		}
