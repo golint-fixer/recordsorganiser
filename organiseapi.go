@@ -167,12 +167,12 @@ func compare(collectionStart *pb.Organisation, collectionEnd *pb.Organisation) [
 }
 
 // DoRegister does RPC registration
-func (s Server) DoRegister(server *grpc.Server) {
-	pb.RegisterOrganiserServiceServer(server, &s)
+func (s *Server) DoRegister(server *grpc.Server) {
+	pb.RegisterOrganiserServiceServer(server, s)
 }
 
 // Mote promotes/demotes this server
-func (s Server) Mote(master bool) error {
+func (s *Server) Mote(master bool) error {
 	return s.loadLatest()
 }
 
@@ -218,8 +218,8 @@ func (s *Server) loadLatest() error {
 }
 
 // InitServer builds an initial server
-func InitServer() Server {
-	server := Server{&goserver.GoServer{}, prodBridge{}, &pb.Organisation{}, &pb.Organisation{}}
+func InitServer() *Server {
+	server := &Server{&goserver.GoServer{}, prodBridge{}, &pb.Organisation{}, &pb.Organisation{}}
 	server.PrepServer()
 	server.bridge = &prodBridge{Resolver: server.GetIP}
 	server.GoServer.KSclient = *keystoreclient.GetClient(server.GetIP)
