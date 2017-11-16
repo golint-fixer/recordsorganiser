@@ -252,7 +252,6 @@ func (s *Server) arrangeLocation(location *pb.Location) (*pb.Location, error) {
 
 	switch location.Sort {
 	case pb.Location_BY_LABEL_CATNO:
-		s.Log(fmt.Sprintf("SORTING: %v", releases))
 		sort.Sort(pbd.ByLabelCat(releases))
 	case pb.Location_BY_DATE_ADDED:
 		var combined []*pb.CombinedRelease
