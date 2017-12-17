@@ -2,131 +2,77 @@ syntax = "proto3";
 
 package proto;
 
-import "github.com/brotherlogic/godiscogs/godiscogs.proto";
-import "github.com/brotherlogic/discogssyncer/server/server.proto";
-
 message Empty {}
 
-message CombinedRelease {
-  godiscogs.Release release = 1;
-  discogsserver.ReleaseMetadata metadata = 2;
-}
-
 message ReleasePlacement {
-        // The id of the release
-        int32 release_id = 1;
+  // The id of the release
+  int32 instance_id = 1;
 
-        // The index in the folder
-        int32 index = 2;
+  // The index in the folder
+  int32 index = 2;
 
-        // The slot in the folder
-        int32 slot = 3;
-
-        // The prior release
-        int32 before_release_id = 4;
-
-        // The following release
-        int32 after_release_id = 5;
-
-        // The name of the folder
-        string folder = 6;
+  // The slot in the folder
+  int32 slot = 3;
 }
 
 message Quota {
   // The number of allowed units
-  int32 num_of_units = 1;
+  int32 num_of_slots = 1;
 
   // The total width of the set
   int32 total_width = 2;
 }
 
 message Location {
-        // The name of the location
-        string name = 1;
+  // The name of the location
+  string name = 1;
 
-        // The number of units within the location
-        int32 units = 2;
+  // The number of units within the location
+  int32 slots = 2;
 
-        // The folder ids that are stored in this location
-        repeated int32 folder_ids = 3;
+  // The folder ids that are stored in this location
+  repeated int32 folder_ids = 3;
 
-        // The placement of releases in the folder
-        repeated ReleasePlacement releases_location = 4;
+  // The placement of releases in the folder
+  repeated ReleasePlacement releases_location = 4;
 
-        // The means by which the folder is sorted
-        enum Sorting {
-             BY_LABEL_CATNO = 0;
-             BY_DATE_ADDED = 1;
-             BY_RELEASE_DATE = 2;
-        }
-        Sorting sort = 5;
+  // The means by which the folder is sorted
+  enum Sorting {
+    BY_LABEL_CATNO = 0;
+    BY_DATE_ADDED = 1;
+    BY_RELEASE_DATE = 2;
+  }
+  Sorting sort = 5;
 
-        // The timestamp of this given location / arrangement
-        int64 timestamp = 6;
+  // The timestamp of this given location / arrangement
+  int64 timestamp = 6;
 
-        // The allowed quota for this location, if any
-        Quota quota = 7;
+  // The allowed quota for this location, if any
+  Quota quota = 7;
 
-        // The type of format we expect in this location
-        string expected_format = 8;
+  // The type of format we expect in this location
+  string expected_format = 8;
 
-        // The type of label we don't expect in this location
-        string unexpected_label = 9;
-}
-
-message LocationList {
-  repeated Location locations = 1;
+  // The type of label we don't expect in this location
+  string unexpected_label = 9;
 }
 
 message Organisation {
-        // Timestamp this organisation was made
-        int64 timestamp = 1;
+  // Timestamp this organisation was made
+  int64 timestamp = 1;
 
-        // The locations in this sorting
-        repeated Location locations = 2;
+  // The locations in this sorting
+  repeated Location locations = 2;
 }
 
-message OrganisationList {
-        repeated Organisation organisations = 1;
+message AddLocationRequest {
+  Location add = 1;
 }
 
-message LocationMove {
-        ReleasePlacement old = 1;
-        ReleasePlacement new = 2;
-        bool slot_move = 3;
-}
-
-message OrganisationMoves {
-        int64 start_timestamp = 1;
-        int64 end_timestamp = 2;
-        repeated LocationMove moves = 3;
-}
-
-message ReleaseLocation {
-  Location location = 1;
-  int32 slot = 2;
-  godiscogs.Release before = 3;
-  godiscogs.Release after = 4;
-}
-
-message DiffRequest {
-  string location_name = 3;
-  int32 slot = 4;
-}
-
-message CleanList {
-  repeated godiscogs.Release entries = 1;
+message AddLocationResponse {
+  Organisation now = 1;
 }
 
 service OrganiserService {
-        rpc Organise (Empty) returns (OrganisationMoves) {};
-        rpc Locate (godiscogs.Release) returns (ReleaseLocation) {};
-        rpc AddLocation (Location) returns (Location) {};
-        rpc GetLocation (Location) returns (Location) {};
-        rpc GetOrganisation (Empty) returns (Organisation) {};
-        rpc UpdateLocation (Location) returns (Location) {};
-        rpc DeleteLocation (Location) returns (Empty) {};
-        rpc Diff (DiffRequest) returns (OrganisationMoves) {};
-        rpc GetQuotaViolations (Empty) returns (LocationList) {};
-        rpc CleanLocation (Location) returns (CleanList) {};
+  rpc AddLocation (AddLocationRequest) returns (AddLocationResponse) {};
 }
