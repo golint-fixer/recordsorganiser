@@ -73,6 +73,15 @@ message AddLocationResponse {
   Organisation now = 1;
 }
 
+message GetOrganisationRequest {
+  repeated Location locations = 1;
+}
+
+message GetOrganisationResponse {
+  repeated Location locations = 1;
+}
+
 service OrganiserService {
   rpc AddLocation (AddLocationRequest) returns (AddLocationResponse) {};
+  rpc GetOrganisation (GetOrganisationRequest) returns (GetOrganisationResponse) {};
 }
