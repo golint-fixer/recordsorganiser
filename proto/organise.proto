@@ -75,6 +75,9 @@ message AddLocationResponse {
 
 message GetOrganisationRequest {
   repeated Location locations = 1;
+
+  // Force a reorg on returned locations
+  bool force_reorg = 2;
 }
 
 message GetOrganisationResponse {
