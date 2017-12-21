@@ -20,7 +20,7 @@ import (
 )
 
 func get(ctx context.Context, client pb.OrganiserServiceClient, name string) {
-	locs, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{Locations: []*pb.Location{&pb.Location{Name: name}}})
+	locs, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{ForceReorg: true, Locations: []*pb.Location{&pb.Location{Name: name}}})
 	if err != nil {
 		log.Fatalf("Error reading locations: %v", err)
 	}
