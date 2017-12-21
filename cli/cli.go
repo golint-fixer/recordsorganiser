@@ -19,8 +19,8 @@ import (
 	_ "google.golang.org/grpc/encoding/gzip"
 )
 
-func get(ctx context.Context, client pb.OrganiserServiceClient, name string) {
-	locs, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{ForceReorg: true, Locations: []*pb.Location{&pb.Location{Name: name}}})
+func get(ctx context.Context, client pb.OrganiserServiceClient, name string, force bool) {
+	locs, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{ForceReorg: force, Locations: []*pb.Location{&pb.Location{Name: name}}})
 	if err != nil {
 		log.Fatalf("Error reading locations: %v", err)
 	}
@@ -84,9 +84,10 @@ func main() {
 	case "get":
 		getLocationFlags := flag.NewFlagSet("GetLocation", flag.ExitOnError)
 		var name = getLocationFlags.String("name", "", "The name of the location")
+		var force = getLocationFlags.Bool("force", false, "If we should force a reorg")
 
 		if err := getLocationFlags.Parse(os.Args[2:]); err == nil {
-			get(ctx, client, *name)
+			get(ctx, client, *name, *force)
 		}
 	case "add":
 		addLocationFlags := flag.NewFlagSet("AddLocation", flag.ExitOnError)

@@ -29,20 +29,22 @@ func (s *Server) prepareForReorg() {
 
 }
 
-func (s *Server) organise(c *pb.Organisation) error {
+func (s *Server) organise(c *pb.Organisation) (int32, error) {
+	num := int32(0)
 	for _, l := range s.org.Locations {
-		err := s.organiseLocation(l)
+		n, err := s.organiseLocation(l)
 		if err != nil {
-			return err
+			return -1, err
 		}
+		num += n
 	}
-	return nil
+	return num, nil
 }
 
-func (s *Server) organiseLocation(c *pb.Location) error {
+func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
 	fr, err := s.bridge.getReleases(c.GetFolderIds())
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	switch c.GetSort() {
@@ -50,5 +52,5 @@ func (s *Server) organiseLocation(c *pb.Location) error {
 		sort.Sort(ByLabelCat(fr))
 	}
 
-	return nil
+	return int32(len(fr)), nil
 }

@@ -13,7 +13,7 @@ func (s *Server) AddLocation(ctx context.Context, req *pb.AddLocationRequest) (*
 
 	s.org.Locations = append(s.org.Locations, req.GetAdd())
 
-	err := s.organise(s.org)
+	_, err := s.organise(s.org)
 
 	if err != nil {
 		return &pb.AddLocationResponse{}, err
@@ -27,12 +27,14 @@ func (s *Server) AddLocation(ctx context.Context, req *pb.AddLocationRequest) (*
 // GetOrganisation gets a given organisation
 func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationRequest) (*pb.GetOrganisationResponse, error) {
 	locations := make([]*pb.Location, 0)
+	num := int32(0)
 
 	for _, rloc := range req.GetLocations() {
 		for _, loc := range s.org.GetLocations() {
 			if utils.FuzzyMatch(rloc, loc) {
 				if req.ForceReorg {
-					err := s.organiseLocation(loc)
+					n, err := s.organiseLocation(loc)
+					num = n
 					if err != nil {
 						return &pb.GetOrganisationResponse{}, err
 					}
@@ -45,5 +47,5 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 	if req.GetForceReorg() {
 		s.saveOrg()
 	}
-	return &pb.GetOrganisationResponse{Locations: locations}, nil
+	return &pb.GetOrganisationResponse{Locations: locations, NumberProcessed: num}, nil
 }
