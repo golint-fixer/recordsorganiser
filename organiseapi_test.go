@@ -21,7 +21,7 @@ func TestGetLocation(t *testing.T) {
 		t.Fatalf("Unable to add location: %v", err)
 	}
 
-	resp, err := testServer.GetOrganisation(context.Background(), &pb.GetOrganisationRequest{Locations: []*pb.Location{&pb.Location{Name: "TestName"}}})
+	resp, err := testServer.GetOrganisation(context.Background(), &pb.GetOrganisationRequest{ForceReorg: true, Locations: []*pb.Location{&pb.Location{Name: "TestName"}}})
 	if err != nil {
 		t.Fatalf("Unable to get organisation %v", err)
 	}

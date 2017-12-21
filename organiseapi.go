@@ -19,6 +19,8 @@ func (s *Server) AddLocation(ctx context.Context, req *pb.AddLocationRequest) (*
 		return &pb.AddLocationResponse{}, err
 	}
 
+	s.saveOrg()
+
 	return &pb.AddLocationResponse{Now: s.org}, nil
 }
 
@@ -38,6 +40,10 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 				locations = append(locations, loc)
 			}
 		}
+	}
+
+	if req.GetForceReorg() {
+		s.saveOrg()
 	}
 	return &pb.GetOrganisationResponse{Locations: locations}, nil
 }

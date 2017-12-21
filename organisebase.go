@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"strconv"
-	"time"
 
 	"github.com/brotherlogic/goserver"
 	"github.com/brotherlogic/keystore/client"
@@ -20,14 +19,29 @@ import (
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 )
 
-const (
-	//Key the current state of the collection
-	Key = "/github.com/brotherlogic/recordsorganiser/organisation"
-)
-
 // Bridge that accesses discogs syncer server
 type prodBridge struct {
 	Resolver func(string) (string, int)
+}
+
+const (
+	//KEY is where we store the org
+	KEY = "github.com/brotherlogic/recordsorganiser/org"
+)
+
+func (s *Server) readOrg() error {
+	org := &pb.Organisation{}
+	data, _, err := s.KSclient.Read(KEY, org)
+
+	if err != nil {
+		return err
+	}
+	s.org = data.(*pb.Organisation)
+	return nil
+}
+
+func (s *Server) saveOrg() {
+	s.KSclient.Save(KEY, s.org)
 }
 
 func (discogsBridge prodBridge) GetIP(name string) (string, int) {
@@ -89,42 +103,17 @@ func (s *Server) DoRegister(server *grpc.Server) {
 
 // Mote promotes/demotes this server
 func (s *Server) Mote(master bool) error {
-	return s.loadLatest()
+	if master {
+		err := s.readOrg()
+		return err
+	}
+
+	return nil
 }
 
 // GetState gets the state of the server
 func (s Server) GetState() []*pbgs.State {
 	return []*pbgs.State{}
-}
-
-func (s Server) save() {
-
-	// Always update the timestamp on a save
-	s.org.Timestamp = time.Now().Unix()
-	s.KSclient.Save(Key, s.org)
-}
-
-func (s Server) load(key string) (*pb.Organisation, error) {
-	collection := &pb.Organisation{}
-	data, _, err := s.KSclient.Read(key, collection)
-	if err != nil {
-		return nil, err
-	}
-
-	return data.(*pb.Organisation), nil
-}
-
-func (s *Server) loadLatest() error {
-	curr, err := s.load(Key)
-	if err != nil {
-		return err
-	}
-
-	s.org = curr
-
-	log.Printf("LOADED %v", curr)
-
-	return nil
 }
 
 // InitServer builds an initial server
