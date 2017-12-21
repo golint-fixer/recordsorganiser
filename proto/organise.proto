@@ -82,6 +82,7 @@ message GetOrganisationRequest {
 
 message GetOrganisationResponse {
   repeated Location locations = 1;
+  int32 number_processed = 2;
 }
 
 service OrganiserService {
