@@ -36,14 +36,14 @@ func getReleaseString(instanceID int32) string {
 	client := pbrc.NewRecordCollectionServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	rel, err := client.GetRecords(ctx, &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: instanceID}}})
+	rel, err := client.GetRecords(ctx, &pbrc.GetRecordsRequest{Force: true, Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: instanceID}}})
 	if err != nil {
 		log.Fatalf("unable to get record: %v", err)
 	}
 	return rel.GetRecords()[0].GetRelease().Title
 }
 
-func get(ctx context.Context, client pb.OrganiserServiceClient, name string, force bool) {
+func get(ctx context.Context, client pb.OrganiserServiceClient, name string, force bool, slot int32) {
 	locs, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{ForceReorg: force, Locations: []*pb.Location{&pb.Location{Name: name}}})
 	if err != nil {
 		log.Fatalf("Error reading locations: %v", err)
@@ -52,7 +52,7 @@ func get(ctx context.Context, client pb.OrganiserServiceClient, name string, for
 	for _, loc := range locs.GetLocations() {
 		fmt.Printf("%v (%v)\n", loc.GetName(), len(loc.GetReleasesLocation()))
 		for j, rloc := range loc.GetReleasesLocation() {
-			if rloc.GetSlot() == 1 {
+			if rloc.GetSlot() == slot {
 				fmt.Printf("%v. %v\n", j, getReleaseString(rloc.GetInstanceId()))
 			}
 		}
@@ -113,9 +113,10 @@ func main() {
 		getLocationFlags := flag.NewFlagSet("GetLocation", flag.ExitOnError)
 		var name = getLocationFlags.String("name", "", "The name of the location")
 		var force = getLocationFlags.Bool("force", false, "Force a reorg")
+		var slot = getLocationFlags.Int("slot", 1, "Slot to view")
 
 		if err := getLocationFlags.Parse(os.Args[2:]); err == nil {
-			get(ctx, client, *name, *force)
+			get(ctx, client, *name, *force, int32(*slot))
 		}
 	case "add":
 		addLocationFlags := flag.NewFlagSet("AddLocation", flag.ExitOnError)
