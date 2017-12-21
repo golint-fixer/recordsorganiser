@@ -52,5 +52,10 @@ func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
 		sort.Sort(ByLabelCat(fr))
 	}
 
+	c.ReleasesLocation = []*pb.ReleasePlacement{}
+	for i, rinloc := range fr {
+		c.ReleasesLocation = append(c.ReleasesLocation, &pb.ReleasePlacement{Index: int32(i), InstanceId: rinloc.GetRelease().InstanceId})
+	}
+
 	return int32(len(fr)), nil
 }

@@ -32,6 +32,8 @@ func get(ctx context.Context, client pb.OrganiserServiceClient, name string, for
 		}
 	}
 
+	fmt.Printf("Summary: %v\n", locs.GetNumberProcessed())
+
 	if len(locs.GetLocations()) == 0 {
 		fmt.Printf("No Locations Found!\n")
 	}
@@ -84,7 +86,7 @@ func main() {
 	case "get":
 		getLocationFlags := flag.NewFlagSet("GetLocation", flag.ExitOnError)
 		var name = getLocationFlags.String("name", "", "The name of the location")
-		var force = getLocationFlags.Bool("force", false, "If we should force a reorg")
+		var force = getLocationFlags.Bool("force", false, "Force a reorg")
 
 		if err := getLocationFlags.Parse(os.Args[2:]); err == nil {
 			get(ctx, client, *name, *force)
