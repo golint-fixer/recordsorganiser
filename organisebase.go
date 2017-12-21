@@ -40,8 +40,8 @@ func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetad
 	if err2 == nil {
 		defer conn.Close()
 		client := pbs.NewDiscogsServiceClient(conn)
-		meta, err2 := client.GetMetadata(context.Background(), rel)
-		if err2 == nil {
+		meta, err3 := client.GetMetadata(context.Background(), rel)
+		if err3 == nil {
 			return meta, nil
 		}
 	}
