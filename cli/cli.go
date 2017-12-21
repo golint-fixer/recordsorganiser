@@ -13,11 +13,35 @@ import (
 	"github.com/brotherlogic/goserver/utils"
 	"google.golang.org/grpc"
 
+	pbgd "github.com/brotherlogic/godiscogs"
+	pbrc "github.com/brotherlogic/recordcollection/proto"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 
 	//Needed to pull in gzip encoding init
 	_ "google.golang.org/grpc/encoding/gzip"
 )
+
+func getReleaseString(instanceID int32) string {
+	host, port, err := utils.Resolve("recordcollection")
+	if err != nil {
+		log.Fatalf("Unable to reach collection: %v", err)
+	}
+	conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+	defer conn.Close()
+
+	if err != nil {
+		log.Fatalf("Unable to dial: %v", err)
+	}
+
+	client := pbrc.NewRecordCollectionServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	rel, err := client.GetRecords(ctx, &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: instanceID}}})
+	if err != nil {
+		log.Fatalf("unable to get record: %v", err)
+	}
+	return rel.GetRecords()[0].GetRelease().Title
+}
 
 func get(ctx context.Context, client pb.OrganiserServiceClient, name string, force bool) {
 	locs, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{ForceReorg: force, Locations: []*pb.Location{&pb.Location{Name: name}}})
@@ -28,7 +52,9 @@ func get(ctx context.Context, client pb.OrganiserServiceClient, name string, for
 	for _, loc := range locs.GetLocations() {
 		fmt.Printf("%v (%v)\n", loc.GetName(), len(loc.GetReleasesLocation()))
 		for j, rloc := range loc.GetReleasesLocation() {
-			fmt.Printf("%v. %v", j, rloc.GetInstanceId())
+			if rloc.GetSlot() == 1 {
+				fmt.Printf("%v. %v\n", j, getReleaseString(rloc.GetInstanceId()))
+			}
 		}
 	}
 

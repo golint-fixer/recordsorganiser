@@ -82,3 +82,32 @@ func (a ByEarliestReleaseDate) Less(i, j int) bool {
 	}
 	return strings.Compare(a[i].Title, a[j].Title) < 0
 }
+
+// Split splits a releases list into buckets
+func Split(releases []*pbrc.Record, n float64) [][]*pbrc.Record {
+	var solution [][]*pbrc.Record
+
+	var count int32
+	count = 0
+	for _, rel := range releases {
+		count += rel.GetRelease().FormatQuantity
+	}
+
+	boundaryAccumulator := float64(count) / n
+	boundaryValue := boundaryAccumulator
+	currentValue := 0.0
+	var currentReleases []*pbrc.Record
+	for _, rel := range releases {
+		if currentValue+float64(rel.GetRelease().FormatQuantity) > boundaryValue {
+			solution = append(solution, currentReleases)
+			currentReleases = make([]*pbrc.Record, 0)
+			boundaryValue += boundaryAccumulator
+		}
+
+		currentReleases = append(currentReleases, rel)
+		currentValue += float64(rel.GetRelease().FormatQuantity)
+	}
+	solution = append(solution, currentReleases)
+
+	return solution
+}
