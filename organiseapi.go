@@ -1,11 +1,26 @@
 package main
 
 import (
+	"fmt"
+
 	"golang.org/x/net/context"
 
 	"github.com/brotherlogic/goserver/utils"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 )
+
+//Locate finds a record in the collection
+func (s *Server) Locate(ctx context.Context, req *pb.LocateRequest) (*pb.LocateResponse, error) {
+	for _, loc := range s.org.GetLocations() {
+		for _, r := range loc.GetReleasesLocation() {
+			if r.GetInstanceId() == req.GetInstanceId() {
+				return &pb.LocateResponse{FoundLocation: loc}, nil
+			}
+		}
+	}
+
+	return &pb.LocateResponse{}, fmt.Errorf("Unable to locate %v in collection", req.GetInstanceId())
+}
 
 //AddLocation adds a location
 func (s *Server) AddLocation(ctx context.Context, req *pb.AddLocationRequest) (*pb.AddLocationResponse, error) {

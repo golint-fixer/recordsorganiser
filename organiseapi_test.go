@@ -7,6 +7,50 @@ import (
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 )
 
+func TestLocate(t *testing.T) {
+	testServer := getTestServer(".testLocate")
+	location := &pb.Location{
+		Name:      "TestName",
+		Slots:     1,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_DATE_ADDED,
+		ReleasesLocation: []*pb.ReleasePlacement{
+			&pb.ReleasePlacement{InstanceId: 1234, Index: 1, Slot: 1},
+		},
+	}
+	testServer.org.Locations = append(testServer.org.Locations, location)
+
+	f, err := testServer.Locate(context.Background(), &pb.LocateRequest{InstanceId: 1234})
+
+	if err != nil {
+		t.Fatalf("Error locating record: %v", err)
+	}
+
+	if f.FoundLocation.GetName() != "TestName" {
+		t.Errorf("Error on spotted location: %v", f)
+	}
+}
+
+func TestLocateFail(t *testing.T) {
+	testServer := getTestServer(".testLocate")
+	location := &pb.Location{
+		Name:      "TestName",
+		Slots:     1,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_DATE_ADDED,
+		ReleasesLocation: []*pb.ReleasePlacement{
+			&pb.ReleasePlacement{InstanceId: 1234, Index: 1, Slot: 1},
+		},
+	}
+	testServer.org.Locations = append(testServer.org.Locations, location)
+
+	f, err := testServer.Locate(context.Background(), &pb.LocateRequest{InstanceId: 12345})
+
+	if err == nil {
+		t.Fatalf("Failed locate has not failed: %v", f)
+	}
+}
+
 func TestGetLocation(t *testing.T) {
 	testServer := getTestServer(".testAddLocation")
 	location := &pb.Location{
