@@ -41,9 +41,17 @@ func locateRelease(ctx context.Context, c pb.OrganiserServiceClient, id int32) {
 	for _, rec := range recs.GetRecords() {
 		location, err := c.Locate(ctx, &pb.LocateRequest{InstanceId: rec.GetRelease().InstanceId})
 		if err != nil {
-			fmt.Printf("Unable to locate instance (%v) of %v: %v\n", rec.GetRelease().InstanceId, rec.GetRelease().Title, err)
+			fmt.Printf("Unable to locate instance (%v) of %v because %v\n", rec.GetRelease().InstanceId, rec.GetRelease().Title, err)
 		} else {
 			fmt.Printf("%v (%v) is in %v\n", rec.GetRelease().Title, rec.GetRelease().InstanceId, location.GetFoundLocation().GetName())
+
+			for i, r := range location.GetFoundLocation().GetReleasesLocation() {
+				if r.GetInstanceId() == rec.GetRelease().InstanceId {
+					fmt.Printf("%v. %v\n", i-1, getReleaseString(location.GetFoundLocation().GetReleasesLocation()[i-1].InstanceId))
+					fmt.Printf("%v. %v\n", i, getReleaseString(location.GetFoundLocation().GetReleasesLocation()[i].InstanceId))
+					fmt.Printf("%v. %v\n", i+1, getReleaseString(location.GetFoundLocation().GetReleasesLocation()[i+1].InstanceId))
+				}
+			}
 		}
 	}
 }
