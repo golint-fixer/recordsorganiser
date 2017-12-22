@@ -85,7 +85,16 @@ message GetOrganisationResponse {
   int32 number_processed = 2;
 }
 
+message LocateRequest {
+  int32 instance_id = 1;
+}
+
+message LocateResponse {
+  Location found_location = 2;
+}
+
 service OrganiserService {
   rpc AddLocation (AddLocationRequest) returns (AddLocationResponse) {};
   rpc GetOrganisation (GetOrganisationRequest) returns (GetOrganisationResponse) {};
+  rpc Locate (LocateRequest) returns (LocateResponse) {};
 }
