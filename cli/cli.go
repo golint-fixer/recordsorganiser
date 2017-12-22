@@ -21,6 +21,33 @@ import (
 	_ "google.golang.org/grpc/encoding/gzip"
 )
 
+func locateRelease(ctx context.Context, c pb.OrganiserServiceClient, id int32) {
+	host, port, err := utils.Resolve("recordcollection")
+	if err != nil {
+		log.Fatalf("Unable to reach collection: %v", err)
+	}
+	conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+	defer conn.Close()
+
+	if err != nil {
+		log.Fatalf("Unable to dial: %v", err)
+	}
+
+	client := pbrc.NewRecordCollectionServiceClient(conn)
+	recs, err := client.GetRecords(ctx, &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{Id: id}}})
+	if err != nil {
+		log.Fatalf("Unable to get record %v -> %v", id, err)
+	}
+	for _, rec := range recs.GetRecords() {
+		location, err := c.Locate(ctx, &pb.LocateRequest{InstanceId: rec.GetRelease().InstanceId})
+		if err != nil {
+			fmt.Printf("Unable to locate instance (%v) of %v: %v\n", rec.GetRelease().InstanceId, rec.GetRelease().Title, err)
+		} else {
+			fmt.Printf("%v (%v) is in %v\n", rec.GetRelease().Title, rec.GetRelease().InstanceId, location.GetFoundLocation().GetName())
+		}
+	}
+}
+
 func getReleaseString(instanceID int32) string {
 	host, port, err := utils.Resolve("recordcollection")
 	if err != nil {
@@ -134,6 +161,12 @@ func main() {
 				nums = append(nums, int32(v))
 			}
 			add(ctx, client, *name, nums, int32(*slots))
+		}
+	case "locate":
+		locateFlags := flag.NewFlagSet("Locate", flag.ExitOnError)
+		var id = locateFlags.Int("id", -1, "The id of the release")
+		if err := locateFlags.Parse(os.Args[2:]); err == nil {
+			locateRelease(ctx, client, int32(*id))
 		}
 	}
 }
