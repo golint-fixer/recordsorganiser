@@ -64,3 +64,20 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 	}
 	return &pb.GetOrganisationResponse{Locations: locations, NumberProcessed: num}, nil
 }
+
+// GetQuota fills out the quota response
+func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaResponse, error) {
+	for _, loc := range s.org.GetLocations() {
+		for _, id := range loc.GetFolderIds() {
+			if id == req.GetFolderId() {
+				if loc.GetQuota().GetNumOfSlots() > 0 && len(loc.GetReleasesLocation()) >= int(loc.GetQuota().GetNumOfSlots()) {
+					return &pb.QuotaResponse{OverQuota: true}, nil
+				}
+
+				return &pb.QuotaResponse{OverQuota: false}, nil
+			}
+		}
+	}
+
+	return &pb.QuotaResponse{}, fmt.Errorf("Unable to locate folder in request")
+}
