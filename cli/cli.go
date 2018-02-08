@@ -47,6 +47,7 @@ func locateRelease(ctx context.Context, c pb.OrganiserServiceClient, id int32) {
 
 			for i, r := range location.GetFoundLocation().GetReleasesLocation() {
 				if r.GetInstanceId() == rec.GetRelease().InstanceId {
+					fmt.Printf("Slot %v\n", r.GetSlot())
 					fmt.Printf("%v. %v\n", i-1, getReleaseString(location.GetFoundLocation().GetReleasesLocation()[i-1].InstanceId))
 					fmt.Printf("%v. %v\n", i, getReleaseString(location.GetFoundLocation().GetReleasesLocation()[i].InstanceId))
 					fmt.Printf("%v. %v\n", i+1, getReleaseString(location.GetFoundLocation().GetReleasesLocation()[i+1].InstanceId))

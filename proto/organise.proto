@@ -93,8 +93,17 @@ message LocateResponse {
   Location found_location = 2;
 }
 
+message QuotaRequest {
+  int32 folder_id = 1;
+}
+
+message QuotaResponse {
+  bool over_quota = 1;
+}
+
 service OrganiserService {
   rpc AddLocation (AddLocationRequest) returns (AddLocationResponse) {};
   rpc GetOrganisation (GetOrganisationRequest) returns (GetOrganisationResponse) {};
   rpc Locate (LocateRequest) returns (LocateResponse) {};
+  rpc GetQuota (QuotaRequest) returns (QuotaResponse) {};
 }

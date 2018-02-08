@@ -94,5 +94,90 @@ func TestGetLocationOrgFail(t *testing.T) {
 	if err == nil {
 		t.Fatalf("Failing bridge did not fail reorg %v", err)
 	}
+}
 
+func TestGetOverQuota(t *testing.T) {
+	testServer := getTestServer(".testQuota")
+	location := &pb.Location{
+		Name:      "TestName",
+		Slots:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_DATE_ADDED,
+		Quota:     &pb.Quota{NumOfSlots: 2},
+	}
+
+	l, err := testServer.AddLocation(context.Background(), &pb.AddLocationRequest{Add: location})
+	if err != nil {
+		t.Fatalf("Error in adding location: %v", err)
+	}
+
+	if len(l.GetNow().GetLocations()[0].GetReleasesLocation()) == 0 {
+		t.Fatalf("No releases at the new location")
+	}
+
+	quota, err := testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 10})
+
+	if err != nil {
+		t.Fatalf("Error getting quota: %v", err)
+	}
+
+	if !quota.GetOverQuota() {
+		t.Errorf("Reported under quota?: %v", quota)
+	}
+}
+
+func TestGetUnderQuota(t *testing.T) {
+	testServer := getTestServer(".testQuota")
+	location := &pb.Location{
+		Name:      "TestName",
+		Slots:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_DATE_ADDED,
+		Quota:     &pb.Quota{NumOfSlots: 4},
+	}
+
+	l, err := testServer.AddLocation(context.Background(), &pb.AddLocationRequest{Add: location})
+	if err != nil {
+		t.Fatalf("Error in adding location: %v", err)
+	}
+
+	if len(l.GetNow().GetLocations()[0].GetReleasesLocation()) == 0 {
+		t.Fatalf("No releases at the new location")
+	}
+
+	quota, err := testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 10})
+
+	if err != nil {
+		t.Fatalf("Error getting quota: %v", err)
+	}
+
+	if quota.GetOverQuota() {
+		t.Errorf("Reported over quota?: %v", quota)
+	}
+}
+
+func TestGetQuotaFail(t *testing.T) {
+	testServer := getTestServer(".testQuota")
+	location := &pb.Location{
+		Name:      "TestName",
+		Slots:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_DATE_ADDED,
+		Quota:     &pb.Quota{NumOfSlots: 4},
+	}
+
+	l, err := testServer.AddLocation(context.Background(), &pb.AddLocationRequest{Add: location})
+	if err != nil {
+		t.Fatalf("Error in adding location: %v", err)
+	}
+
+	if len(l.GetNow().GetLocations()[0].GetReleasesLocation()) == 0 {
+		t.Fatalf("No releases at the new location")
+	}
+
+	_, err = testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 20})
+
+	if err == nil {
+		t.Errorf("No errror on bad quota: %v", err)
+	}
 }
