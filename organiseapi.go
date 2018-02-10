@@ -79,5 +79,5 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 		}
 	}
 
-	return &pb.QuotaResponse{}, fmt.Errorf("Unable to locate folder in request")
+	return &pb.QuotaResponse{}, fmt.Errorf("Unable to locate folder in request (%v)", req.GetFolderId())
 }
