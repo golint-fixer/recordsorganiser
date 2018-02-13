@@ -96,6 +96,40 @@ func TestGetLocationOrgFail(t *testing.T) {
 	}
 }
 
+func TestUpdateLocation(t *testing.T) {
+	testServer := getTestServer(".testUpdate")
+	location := &pb.Location{
+		Name:      "TestName",
+		Slots:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_DATE_ADDED,
+		Quota:     &pb.Quota{NumOfSlots: 2},
+	}
+
+	_, err := testServer.AddLocation(context.Background(), &pb.AddLocationRequest{Add: location})
+	if err != nil {
+		t.Fatalf("Error in adding location: %v", err)
+	}
+
+	_, err = testServer.UpdateLocation(context.Background(), &pb.UpdateLocationRequest{Location: "TestName", Update: &pb.Location{Quota: &pb.Quota{NumOfSlots: 3}}})
+	if err != nil {
+		t.Fatalf("Error adding location: %v", err)
+	}
+
+	locs, err := testServer.GetOrganisation(context.Background(), &pb.GetOrganisationRequest{Locations: []*pb.Location{&pb.Location{Name: "TestName"}}})
+	if err != nil {
+		t.Fatalf("Can't get org")
+	}
+
+	if len(locs.GetLocations()) != 1 {
+		t.Fatalf("Error getting org: %v", locs)
+	}
+
+	if locs.GetLocations()[0].GetQuota().GetNumOfSlots() != 3 {
+		t.Errorf("Update failed: %v", locs)
+	}
+}
+
 func TestGetOverQuota(t *testing.T) {
 	testServer := getTestServer(".testQuota")
 	location := &pb.Location{

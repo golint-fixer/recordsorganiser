@@ -27,18 +27,18 @@ func findServer(name string) (string, int) {
 	defer cancel()
 
 	re := &pbdi.RegistryEntry{Name: name}
-	r, err := registry.Discover(ctx, re)
+	r, err := registry.Discover(ctx, &pbdi.DiscoverRequest{Request: re})
 
 	e, ok := status.FromError(err)
 	if ok && e.Code() == codes.Unavailable {
 		log.Printf("RETRY")
-		r, err = registry.Discover(ctx, re)
+		r, err = registry.Discover(ctx, &pbdi.DiscoverRequest{Request: re})
 	}
 
 	if err != nil {
 		return "", -1
 	}
-	return r.Ip, int(r.Port)
+	return r.GetService().Ip, int(r.GetService().Port)
 }
 
 func run() (time.Duration, int64, error) {
