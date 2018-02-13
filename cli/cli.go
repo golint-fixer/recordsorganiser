@@ -177,5 +177,18 @@ func main() {
 		if err := locateFlags.Parse(os.Args[2:]); err == nil {
 			locateRelease(ctx, client, int32(*id))
 		}
+	case "update":
+		updateLocationFlags := flag.NewFlagSet("UpdateLocation", flag.ExitOnError)
+		var name = updateLocationFlags.String("name", "", "The name of the new location")
+		var folder = updateLocationFlags.Int("folder", 0, "The folder to add to the location")
+		var quota = updateLocationFlags.Int("quota", 0, "The new quota to add to the location")
+		if err := updateLocationFlags.Parse(os.Args[2:]); err == nil {
+			if *folder > 0 {
+				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{FolderIds: []int32{int32(*folder)}}})
+			}
+			if *quota > 0 {
+				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{Quota: &pb.Quota{NumOfSlots: int32(*quota)}}})
+			}
+		}
 	}
 }
