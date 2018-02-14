@@ -18,6 +18,7 @@ func (s *Server) UpdateLocation(ctx context.Context, req *pb.UpdateLocationReque
 		}
 	}
 
+	s.saveOrg()
 	return &pb.UpdateLocationResponse{}, nil
 }
 
