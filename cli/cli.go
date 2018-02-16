@@ -86,7 +86,7 @@ func get(ctx context.Context, client pb.OrganiserServiceClient, name string, for
 	}
 
 	for _, loc := range locs.GetLocations() {
-		fmt.Printf("%v (%v)\n", loc.GetName(), len(loc.GetReleasesLocation()))
+		fmt.Printf("%v (%v) -> %v [%v]\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota())
 		for j, rloc := range loc.GetReleasesLocation() {
 			if rloc.GetSlot() == slot {
 				fmt.Printf("%v. %v\n", j, getReleaseString(rloc.GetInstanceId()))
