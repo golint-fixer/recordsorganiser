@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -80,19 +81,23 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 
 // GetQuota fills out the quota response
 func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaResponse, error) {
+	t := time.Now()
 	for _, loc := range s.org.GetLocations() {
 		for _, id := range loc.GetFolderIds() {
 			if id == req.GetFolderId() {
 				s.organiseLocation(loc)
 
 				if loc.GetQuota().GetNumOfSlots() > 0 && len(loc.GetReleasesLocation()) >= int(loc.GetQuota().GetNumOfSlots()) {
+					s.LogFunction("GetQuota-true", t)
 					return &pb.QuotaResponse{OverQuota: true}, nil
 				}
 
+				s.LogFunction("GetQuota-false", t)
 				return &pb.QuotaResponse{OverQuota: false}, nil
 			}
 		}
 	}
 
+	s.LogFunction("GetQuota-notfound", t)
 	return &pb.QuotaResponse{}, fmt.Errorf("Unable to locate folder in request (%v)", req.GetFolderId())
 }
