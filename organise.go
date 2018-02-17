@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"sort"
+	"time"
 
 	"github.com/brotherlogic/goserver"
 
@@ -42,6 +44,7 @@ func (s *Server) organise(c *pb.Organisation) (int32, error) {
 }
 
 func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
+	t := time.Now()
 	fr, err := s.bridge.getReleases(c.GetFolderIds())
 	if err != nil {
 		return -1, err
@@ -60,5 +63,6 @@ func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
 		}
 	}
 
+	s.LogFunction(fmt.Sprintf("orgloc-%v", c.GetName()), t)
 	return int32(len(fr)), nil
 }
