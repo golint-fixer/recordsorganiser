@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/brotherlogic/goserver"
 	"github.com/brotherlogic/keystore/client"
@@ -13,11 +14,35 @@ import (
 	"google.golang.org/grpc"
 
 	pbs "github.com/brotherlogic/discogssyncer/server"
+	pbgh "github.com/brotherlogic/githubcard/proto"
 	pbd "github.com/brotherlogic/godiscogs"
 	pbgs "github.com/brotherlogic/goserver/proto"
+	"github.com/brotherlogic/goserver/utils"
 	pbrc "github.com/brotherlogic/recordcollection/proto"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 )
+
+type prodGh struct{}
+
+func (gh *prodGh) alert(r *pb.Location) error {
+	host, port, err := utils.Resolve("githubcard")
+
+	if err != nil {
+		return err
+	}
+
+	conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+	defer conn.Close()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	client := pbgh.NewGithubClient(conn)
+	_, err = client.AddIssue(ctx, &pbgh.Issue{Title: "Quota Issue", Body: fmt.Sprintf("%v is out of quota", r.GetName()), Service: "recordcollection"})
+	return err
+}
 
 // Bridge that accesses discogs syncer server
 type prodBridge struct {
@@ -118,7 +143,7 @@ func (s Server) GetState() []*pbgs.State {
 
 // InitServer builds an initial server
 func InitServer() *Server {
-	server := &Server{&goserver.GoServer{}, prodBridge{}, &pb.Organisation{}}
+	server := &Server{&goserver.GoServer{}, prodBridge{}, &pb.Organisation{}, &prodGh{}}
 	server.PrepServer()
 	server.bridge = &prodBridge{Resolver: server.GetIP}
 	server.GoServer.KSclient = *keystoreclient.GetClient(server.GetIP)

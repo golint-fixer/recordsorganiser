@@ -130,6 +130,12 @@ func TestUpdateLocation(t *testing.T) {
 	}
 }
 
+type testgh struct{}
+
+func (t *testgh) alert(r *pb.Location) error {
+	return nil
+}
+
 func TestGetOverQuota(t *testing.T) {
 	testServer := getTestServer(".testQuota")
 	location := &pb.Location{

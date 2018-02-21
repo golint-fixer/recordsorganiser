@@ -248,7 +248,7 @@ func (discogsBridge testBridgeMove) moveToFolder(move *pbs.ReleaseMove) {
 }
 
 func getTestServer(dir string) *Server {
-	testServer := &Server{GoServer: &goserver.GoServer{}, bridge: testBridge{}, org: &pb.Organisation{}}
+	testServer := &Server{GoServer: &goserver.GoServer{}, bridge: testBridge{}, org: &pb.Organisation{}, gh: &testgh{}}
 	testServer.Register = testServer
 	testServer.GoServer.KSclient = *keystoreclient.GetTestClient(dir)
 	testServer.SkipLog = true
