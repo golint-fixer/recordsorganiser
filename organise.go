@@ -18,6 +18,11 @@ type Server struct {
 	*goserver.GoServer
 	bridge discogsBridge
 	org    *pb.Organisation
+	gh     gh
+}
+
+type gh interface {
+	alert(r *pb.Location) error
 }
 
 type discogsBridge interface {
