@@ -55,6 +55,9 @@ message Location {
 
   // The type of label we don't expect in this location
   string unexpected_label = 9;
+
+  // Don't send an alert when there are quota problems
+  bool no_alert = 10;
 }
 
 message Organisation {
