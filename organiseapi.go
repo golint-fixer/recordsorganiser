@@ -89,7 +89,9 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 
 				if loc.GetQuota().GetNumOfSlots() > 0 && len(loc.GetReleasesLocation()) >= int(loc.GetQuota().GetNumOfSlots()) {
 					s.LogFunction("GetQuota-true", t)
-					s.gh.alert(loc)
+					if !loc.GetNoAlert() {
+						s.gh.alert(loc)
+					}
 					return &pb.QuotaResponse{OverQuota: true}, nil
 				}
 
