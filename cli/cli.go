@@ -86,7 +86,7 @@ func get(ctx context.Context, client pb.OrganiserServiceClient, name string, for
 	}
 
 	for _, loc := range locs.GetLocations() {
-		fmt.Printf("%v (%v) -> %v [%v]\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota())
+		fmt.Printf("%v (%v) -> %v [%v] with %v\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota(), loc.Sort.String())
 		for j, rloc := range loc.GetReleasesLocation() {
 			if rloc.GetSlot() == slot {
 				fmt.Printf("%v. %v\n", j, getReleaseString(rloc.GetInstanceId()))
@@ -177,17 +177,72 @@ func main() {
 		if err := locateFlags.Parse(os.Args[2:]); err == nil {
 			locateRelease(ctx, client, int32(*id))
 		}
+	case "sell":
+		sellFlags := flag.NewFlagSet("sell", flag.ExitOnError)
+		var name = sellFlags.String("name", "", "The name of the location to get")
+
+		if err := sellFlags.Parse(os.Args[2:]); err == nil {
+			loc, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{Locations: []*pb.Location{&pb.Location{Name: *name}}})
+			if err != nil {
+				log.Fatalf("ERRR: %v", err)
+			}
+
+			records := make([]*pbrc.Record, 0)
+			minScore := int32(6)
+			for _, l := range loc.GetLocations() {
+				for _, id := range l.GetFolderIds() {
+					host, port, err := utils.Resolve("recordcollection")
+					if err != nil {
+						log.Fatalf("Unable to reach collection: %v", err)
+					}
+					conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+					defer conn.Close()
+
+					if err != nil {
+						log.Fatalf("Unable to dial: %v", err)
+					}
+
+					rclient := pbrc.NewRecordCollectionServiceClient(conn)
+					recs, err := rclient.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{}, Metadata: &pbrc.ReleaseMetadata{GoalFolder: id}}})
+					if err != nil {
+						log.Fatalf("Error : %v", err)
+					}
+
+					for _, r := range recs.GetRecords() {
+						if r.GetRelease().Rating > 0 {
+							records = append(records, r)
+							if r.GetRelease().Rating < minScore {
+								minScore = r.GetRelease().Rating
+							}
+						}
+					}
+				}
+			}
+
+			log.Printf("FOUND %v [%v]", len(records), minScore)
+			for _, r := range records {
+				if r.GetRelease().Rating == minScore {
+					fmt.Printf("SELL: %v\n", r.GetRelease().Title)
+				}
+			}
+		}
 	case "update":
 		updateLocationFlags := flag.NewFlagSet("UpdateLocation", flag.ExitOnError)
 		var name = updateLocationFlags.String("name", "", "The name of the new location")
 		var folder = updateLocationFlags.Int("folder", 0, "The folder to add to the location")
 		var quota = updateLocationFlags.Int("quota", 0, "The new quota to add to the location")
+		var sort = updateLocationFlags.String("sort", "", "The new sorting mechanism")
 		if err := updateLocationFlags.Parse(os.Args[2:]); err == nil {
 			if *folder > 0 {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{FolderIds: []int32{int32(*folder)}}})
 			}
 			if *quota > 0 {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{Quota: &pb.Quota{NumOfSlots: int32(*quota)}}})
+			}
+			if len(*sort) > 0 {
+				if *sort == "time" {
+					client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{Sort: pb.Location_BY_DATE_ADDED}})
+				}
 			}
 		}
 	}
