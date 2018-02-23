@@ -86,7 +86,7 @@ func get(ctx context.Context, client pb.OrganiserServiceClient, name string, for
 	}
 
 	for _, loc := range locs.GetLocations() {
-		fmt.Printf("%v (%v) -> %v [%v] with %v\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota(), loc.Sort.String())
+		fmt.Printf("%v (%v) -> %v [%v] with %v (%v)\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota(), loc.Sort.String(), loc.GetNoAlert())
 		for j, rloc := range loc.GetReleasesLocation() {
 			if rloc.GetSlot() == slot {
 				fmt.Printf("%v. %v\n", j, getReleaseString(rloc.GetInstanceId()))
@@ -209,7 +209,7 @@ func main() {
 					}
 
 					for _, r := range recs.GetRecords() {
-						if r.GetRelease().Rating > 0 {
+						if r.GetRelease().Rating > 0 && (r.GetRelease().FolderId == id || r.GetMetadata().GetMoveFolder() == id) {
 							records = append(records, r)
 							if r.GetRelease().Rating < minScore {
 								minScore = r.GetRelease().Rating
