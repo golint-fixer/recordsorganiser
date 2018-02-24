@@ -51,6 +51,7 @@ func (s *Server) organise(c *pb.Organisation) (int32, error) {
 func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
 	t := time.Now()
 	fr, err := s.bridge.getReleases(c.GetFolderIds())
+	s.LogFunction(fmt.Sprintf("orgget-%v", c.GetName()), t)
 	if err != nil {
 		return -1, err
 	}
