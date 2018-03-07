@@ -39,6 +39,10 @@ func sortByLabelCat(rel1, rel2 pb.Release) int {
 	label1 := pb.GetMainLabel(rel1.Labels)
 	label2 := pb.GetMainLabel(rel2.Labels)
 
+	if label1 == nil || label2 == nil {
+		log.Fatalf("Error sorting by label: %v vs %v", rel1, rel2)
+	}
+	
 	labelSort := strings.Compare(label1.Name, label2.Name)
 	if labelSort != 0 {
 		return labelSort

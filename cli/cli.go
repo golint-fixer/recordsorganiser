@@ -180,8 +180,23 @@ func main() {
 	case "sell":
 		sellFlags := flag.NewFlagSet("sell", flag.ExitOnError)
 		var name = sellFlags.String("name", "", "The name of the location to get")
+		var assess = sellFlags.Bool("assess", false, "Auto assess the for sale records")
 
 		if err := sellFlags.Parse(os.Args[2:]); err == nil {
+				host, port, err := utils.Resolve("recordcollection")
+				if err != nil {
+					log.Fatalf("Unable to reach collection: %v", err)
+				}
+				conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+				defer conn.Close()
+				
+				if err != nil {
+					log.Fatalf("Unable to dial: %v", err)
+				}
+				
+				rclient := pbrc.NewRecordCollectionServiceClient(conn)
+			
+			
 			loc, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{Locations: []*pb.Location{&pb.Location{Name: *name}}})
 			if err != nil {
 				log.Fatalf("ERRR: %v", err)
@@ -189,20 +204,9 @@ func main() {
 
 			records := make([]*pbrc.Record, 0)
 			minScore := int32(6)
+			foundOthers := false
 			for _, l := range loc.GetLocations() {
 				for _, id := range l.GetFolderIds() {
-					host, port, err := utils.Resolve("recordcollection")
-					if err != nil {
-						log.Fatalf("Unable to reach collection: %v", err)
-					}
-					conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
-					defer conn.Close()
-
-					if err != nil {
-						log.Fatalf("Unable to dial: %v", err)
-					}
-
-					rclient := pbrc.NewRecordCollectionServiceClient(conn)
 					recs, err := rclient.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{}, Metadata: &pbrc.ReleaseMetadata{GoalFolder: id}}})
 					if err != nil {
 						log.Fatalf("Error : %v", err)
@@ -219,10 +223,30 @@ func main() {
 				}
 			}
 
-			log.Printf("FOUND %v [%v]", len(records), minScore)
 			for _, r := range records {
-				if r.GetRelease().Rating == minScore {
-					fmt.Printf("SELL: %v\n", r.GetRelease().Title)
+				if r.GetMetadata().Others {
+					foundOthers = true
+					break
+				}
+
+			}
+
+			fmt.Printf("FOUND %v [%v]\n", len(records), minScore)
+			if foundOthers {
+				fmt.Printf("These have others - auto sell\n")
+			}
+			
+			
+			for _, r := range records {
+				if r.GetRelease().Rating == minScore && (!foundOthers || r.GetMetadata().Others) {
+					fmt.Printf("SELL: [%v] %v\n", r.GetRelease().InstanceId, r.GetRelease().Title)
+					if *assess {
+						up := &pbrc.UpdateRecordRequest{Update: &pbrc.Record{Release: &pbgd.Release{InstanceId: r.GetRelease().InstanceId}, Metadata: &pbrc.ReleaseMetadata{Category: pbrc.ReleaseMetadata_ASSESS}}}
+						_, err = rclient.UpdateRecord(context.Background(), up)
+						if err != nil {
+							log.Fatalf("Error updating record: %v", err)
+						}
+					}
 				}
 			}
 		}
