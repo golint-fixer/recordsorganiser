@@ -183,20 +183,19 @@ func main() {
 		var assess = sellFlags.Bool("assess", false, "Auto assess the for sale records")
 
 		if err := sellFlags.Parse(os.Args[2:]); err == nil {
-				host, port, err := utils.Resolve("recordcollection")
-				if err != nil {
-					log.Fatalf("Unable to reach collection: %v", err)
-				}
-				conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
-				defer conn.Close()
-				
-				if err != nil {
-					log.Fatalf("Unable to dial: %v", err)
-				}
-				
-				rclient := pbrc.NewRecordCollectionServiceClient(conn)
-			
-			
+			host, port, err := utils.Resolve("recordcollection")
+			if err != nil {
+				log.Fatalf("Unable to reach collection: %v", err)
+			}
+			conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+			defer conn.Close()
+
+			if err != nil {
+				log.Fatalf("Unable to dial: %v", err)
+			}
+
+			rclient := pbrc.NewRecordCollectionServiceClient(conn)
+
 			loc, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{Locations: []*pb.Location{&pb.Location{Name: *name}}})
 			if err != nil {
 				log.Fatalf("ERRR: %v", err)
@@ -235,9 +234,9 @@ func main() {
 			if foundOthers {
 				fmt.Printf("These have others - auto sell\n")
 			}
-			
-			
+
 			for _, r := range records {
+				log.Printf("%v -> %v and %v", r.GetRelease().Title, r.GetRelease().Rating, r.GetMetadata().Others)
 				if r.GetRelease().Rating == minScore && (!foundOthers || r.GetMetadata().Others) {
 					fmt.Printf("SELL: [%v] %v\n", r.GetRelease().InstanceId, r.GetRelease().Title)
 					if *assess {

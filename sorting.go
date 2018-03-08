@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -35,6 +36,7 @@ func split(str string) []string {
 	return regexp.MustCompile("[0-9]+|[a-z]+|[A-Z]+").FindAllString(str, -1)
 }
 
+// Sorts by label and then catalogue number
 func sortByLabelCat(rel1, rel2 pb.Release) int {
 	label1 := pb.GetMainLabel(rel1.Labels)
 	label2 := pb.GetMainLabel(rel2.Labels)
@@ -42,7 +44,7 @@ func sortByLabelCat(rel1, rel2 pb.Release) int {
 	if label1 == nil || label2 == nil {
 		log.Fatalf("Error sorting by label: %v vs %v", rel1, rel2)
 	}
-	
+
 	labelSort := strings.Compare(label1.Name, label2.Name)
 	if labelSort != 0 {
 		return labelSort
