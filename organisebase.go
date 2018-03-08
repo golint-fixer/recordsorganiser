@@ -110,7 +110,7 @@ func (discogsBridge prodBridge) getReleases(folders []int32) ([]*pbrc.Record, er
 			defer conn.Close()
 			client := pbrc.NewRecordCollectionServiceClient(conn)
 
-			rel, err3 := client.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Strip: true, Filter: &pbrc.Record{Release: &pbd.Release{FolderId: id}}})
+			rel, err3 := client.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Force: true, Strip: true, Filter: &pbrc.Record{Release: &pbd.Release{FolderId: id}}})
 			if err3 != nil {
 				return result, err3
 			}
