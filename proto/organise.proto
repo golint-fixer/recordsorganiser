@@ -58,6 +58,9 @@ message Location {
 
   // Don't send an alert when there are quota problems
   bool no_alert = 10;
+
+  // Folder to move to when this is over quota
+  int32 spill_folder = 11;
 }
 
 message Organisation {
@@ -102,6 +105,7 @@ message QuotaRequest {
 
 message QuotaResponse {
   bool over_quota = 1;
+  int32 spill_folder = 2;
 }
 
 message UpdateLocationRequest {
