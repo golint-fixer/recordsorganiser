@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -20,6 +21,18 @@ import (
 	//Needed to pull in gzip encoding init
 	_ "google.golang.org/grpc/encoding/gzip"
 )
+
+// ByReleaseDate sorts by the given release date
+type ByReleaseDate []*pbrc.Record
+
+func (a ByReleaseDate) Len() int      { return len(a) }
+func (a ByReleaseDate) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByReleaseDate) Less(i, j int) bool {
+	if a[i].GetRelease().Released != a[j].GetRelease().Released {
+		return a[i].GetRelease().Released > a[j].GetRelease().Released
+	}
+	return strings.Compare(a[i].GetRelease().Title, a[j].GetRelease().Title) < 0
+}
 
 func locateRelease(ctx context.Context, c pb.OrganiserServiceClient, id int32) {
 	host, port, err := utils.Resolve("recordcollection")
@@ -177,10 +190,54 @@ func main() {
 		if err := locateFlags.Parse(os.Args[2:]); err == nil {
 			locateRelease(ctx, client, int32(*id))
 		}
+	case "quota":
+		quotaFlags := flag.NewFlagSet("quota", flag.ExitOnError)
+		var name = quotaFlags.String("name", "", "The name of the location to evaluate")
+
+		if err := quotaFlags.Parse(os.Args[2:]); err == nil {
+			loc, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{Locations: []*pb.Location{&pb.Location{Name: *name}}})
+
+			if err != nil {
+				log.Fatalf("Error: %v", err)
+			}
+
+			fmt.Printf("%v / %v is taken for %v\n", len(loc.GetLocations()[0].ReleasesLocation), loc.GetLocations()[0].Quota.GetNumOfSlots(), *name)
+
+			host, port, err := utils.Resolve("recordcollection")
+			if err != nil {
+				log.Fatalf("Unable to reach collection: %v", err)
+			}
+			conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+			defer conn.Close()
+
+			if err != nil {
+				log.Fatalf("Unable to dial: %v", err)
+			}
+
+			rclient := pbrc.NewRecordCollectionServiceClient(conn)
+
+			count := 0
+			for _, l := range loc.GetLocations() {
+				for _, id := range l.GetFolderIds() {
+					recs, err := rclient.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{}, Metadata: &pbrc.ReleaseMetadata{GoalFolder: id}}})
+					if err != nil {
+						log.Fatalf("Error: %v", err)
+					}
+					for _, r := range recs.GetRecords() {
+						if r.GetMetadata().Category != pbrc.ReleaseMetadata_STAGED && r.GetMetadata().Category != pbrc.ReleaseMetadata_STAGED_TO_SELL && r.GetMetadata().Category != pbrc.ReleaseMetadata_SOLD {
+							count++
+						}
+					}
+				}
+			}
+			fmt.Printf("COUNT = %v\n", count)
+			fmt.Printf("We have to sell %v records to meet this\n", count-int(loc.GetLocations()[0].Quota.GetNumOfSlots())+10)
+		}
 	case "sell":
 		sellFlags := flag.NewFlagSet("sell", flag.ExitOnError)
 		var name = sellFlags.String("name", "", "The name of the location to get")
 		var assess = sellFlags.Bool("assess", false, "Auto assess the for sale records")
+		var forcesell = sellFlags.Bool("force", false, "Auto assess the for sale records")
 
 		if err := sellFlags.Parse(os.Args[2:]); err == nil {
 			host, port, err := utils.Resolve("recordcollection")
@@ -212,7 +269,7 @@ func main() {
 					}
 
 					for _, r := range recs.GetRecords() {
-						if r.GetRelease().Rating > 0 && (r.GetRelease().FolderId == id || r.GetMetadata().GetMoveFolder() == id) {
+						if r.GetRelease().Rating > 0 && r.GetMetadata().Category != pbrc.ReleaseMetadata_STAGED && r.GetMetadata().Category != pbrc.ReleaseMetadata_STAGED_TO_SELL && r.GetMetadata().Category != pbrc.ReleaseMetadata_SOLD {
 							records = append(records, r)
 							if r.GetRelease().Rating < minScore {
 								minScore = r.GetRelease().Rating
@@ -230,14 +287,22 @@ func main() {
 
 			}
 
-			fmt.Printf("FOUND %v [%v]\n", len(records), minScore)
+			fmt.Printf("FOUND %v [%v] - need to sell %v\n", len(records), minScore, len(records)-int(loc.GetLocations()[0].GetQuota().GetNumOfSlots()))
 			if foundOthers {
 				fmt.Printf("These have others - auto sell\n")
 			}
 
+			total := len(records) - int(loc.GetLocations()[0].GetQuota().GetNumOfSlots()) + 10
+			count := 0
+
+			//Sort by release date
+			sort.Sort(ByReleaseDate(records))
 			for _, r := range records {
-				log.Printf("%v -> %v and %v", r.GetRelease().Title, r.GetRelease().Rating, r.GetMetadata().Others)
+				if count > total {
+					break
+				}
 				if r.GetRelease().Rating == minScore && (!foundOthers || r.GetMetadata().Others) {
+					count++
 					fmt.Printf("SELL: [%v] %v\n", r.GetRelease().InstanceId, r.GetRelease().Title)
 					if *assess {
 						up := &pbrc.UpdateRecordRequest{Update: &pbrc.Record{Release: &pbgd.Release{InstanceId: r.GetRelease().InstanceId}, Metadata: &pbrc.ReleaseMetadata{Category: pbrc.ReleaseMetadata_ASSESS}}}
@@ -246,6 +311,14 @@ func main() {
 							log.Fatalf("Error updating record: %v", err)
 						}
 					}
+					if *forcesell {
+						up := &pbrc.UpdateRecordRequest{Update: &pbrc.Record{Release: &pbgd.Release{InstanceId: r.GetRelease().InstanceId}, Metadata: &pbrc.ReleaseMetadata{Category: pbrc.ReleaseMetadata_STAGED_TO_SELL}}}
+						_, err = rclient.UpdateRecord(context.Background(), up)
+						if err != nil {
+							log.Fatalf("Error updating record: %v", err)
+						}
+					}
+
 				}
 			}
 		}

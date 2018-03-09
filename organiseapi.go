@@ -92,7 +92,7 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 					if !loc.GetNoAlert() {
 						s.gh.alert(loc)
 					}
-					return &pb.QuotaResponse{OverQuota: true}, nil
+					return &pb.QuotaResponse{SpillFolder: loc.SpillFolder, OverQuota: true}, nil
 				}
 
 				s.LogFunction("GetQuota-false", t)
