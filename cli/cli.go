@@ -99,7 +99,7 @@ func get(ctx context.Context, client pb.OrganiserServiceClient, name string, for
 	}
 
 	for _, loc := range locs.GetLocations() {
-		fmt.Printf("%v (%v) -> %v [%v] with %v (%v)\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota(), loc.Sort.String(), loc.GetNoAlert())
+		fmt.Printf("%v (%v) -> %v [%v] with %v (%v) %v\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota(), loc.Sort.String(), loc.GetNoAlert(), loc.GetSpillFolder())
 		for j, rloc := range loc.GetReleasesLocation() {
 			if rloc.GetSlot() == slot {
 				fmt.Printf("%v. %v\n", j, getReleaseString(rloc.GetInstanceId()))
@@ -329,6 +329,7 @@ func main() {
 		var quota = updateLocationFlags.Int("quota", 0, "The new quota to add to the location")
 		var sort = updateLocationFlags.String("sort", "", "The new sorting mechanism")
 		var alert = updateLocationFlags.Bool("alert", true, "Whether we should alert on this location")
+		var spill = updateLocationFlags.Int("spill", 0, "The spill folder for this location")
 		if err := updateLocationFlags.Parse(os.Args[2:]); err == nil {
 			if *folder > 0 {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{FolderIds: []int32{int32(*folder)}}})
@@ -343,6 +344,9 @@ func main() {
 			}
 			if !*alert {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{NoAlert: true}})
+			}
+			if *spill != 0 {
+				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{SpillFolder: int32(*spill)}})
 			}
 		}
 	}
