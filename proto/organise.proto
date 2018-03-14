@@ -106,6 +106,7 @@ message QuotaRequest {
 message QuotaResponse {
   bool over_quota = 1;
   int32 spill_folder = 2;
+  string location_name = 3;
 }
 
 message UpdateLocationRequest {
