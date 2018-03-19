@@ -105,13 +105,13 @@ func getFormatWidth(r *pbrc.Record) float64 {
 func Split(releases []*pbrc.Record, n float64) [][]*pbrc.Record {
 	var solution [][]*pbrc.Record
 
-	var count int32
+	var count float64
 	count = 0
 	for _, rel := range releases {
-		count += rel.GetRelease().FormatQuantity
+		count += getFormatWidth(rel)
 	}
 
-	boundaryAccumulator := float64(count) / n
+	boundaryAccumulator := count / n
 	boundaryValue := boundaryAccumulator
 	currentValue := 0.0
 	var currentReleases []*pbrc.Record
