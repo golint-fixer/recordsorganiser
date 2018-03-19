@@ -312,7 +312,7 @@ func main() {
 						}
 					}
 					if *forcesell {
-						up := &pbrc.UpdateRecordRequest{Update: &pbrc.Record{Release: &pbgd.Release{InstanceId: r.GetRelease().InstanceId}, Metadata: &pbrc.ReleaseMetadata{Category: pbrc.ReleaseMetadata_STAGED_TO_SELL}}}
+						up := &pbrc.UpdateRecordRequest{Update: &pbrc.Record{Release: &pbgd.Release{InstanceId: r.GetRelease().InstanceId}, Metadata: &pbrc.ReleaseMetadata{Category: pbrc.ReleaseMetadata_PREPARE_TO_SELL}}}
 						_, err = rclient.UpdateRecord(context.Background(), up)
 						if err != nil {
 							log.Fatalf("Error updating record: %v", err)

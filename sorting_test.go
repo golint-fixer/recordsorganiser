@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"sort"
 	"testing"
 
@@ -108,4 +109,12 @@ func TestSortByMasterReleaseDate(t *testing.T) {
 	if releases[0].Id != 3 {
 		t.Errorf("Releases are not correctly ordered: %v", releases)
 	}
+}
+
+func TestGetFormatWidth(t *testing.T) {
+	v := getFormatWidth(&pbrc.Record{Release: &pbd.Release{FormatQuantity: 1, Labels: []*pbd.Label{&pbd.Label{Name: "Death Waltz Recording Company"}}}})
+	if v != 2.0 {
+		t.Errorf("Bad width: %v", v)
+	}
+	log.Printf("GOOD WIDTH = %v", v)
 }

@@ -84,6 +84,23 @@ func (a ByEarliestReleaseDate) Less(i, j int) bool {
 	return strings.Compare(a[i].Title, a[j].Title) < 0
 }
 
+func getFormatWidth(r *pbrc.Record) float64 {
+	v := float64(r.GetRelease().FormatQuantity)
+
+	// Death Waltz release are thicker than average
+	deathWaltz := false
+	for _, label := range r.GetRelease().GetLabels() {
+		if label.Name == "Death Waltz Recording Company" {
+			deathWaltz = true
+		}
+	}
+	if deathWaltz {
+		v++
+	}
+
+	return v
+}
+
 // Split splits a releases list into buckets
 func Split(releases []*pbrc.Record, n float64) [][]*pbrc.Record {
 	var solution [][]*pbrc.Record
@@ -99,14 +116,14 @@ func Split(releases []*pbrc.Record, n float64) [][]*pbrc.Record {
 	currentValue := 0.0
 	var currentReleases []*pbrc.Record
 	for _, rel := range releases {
-		if currentValue+float64(rel.GetRelease().FormatQuantity) > boundaryValue {
+		if currentValue+getFormatWidth(rel) > boundaryValue {
 			solution = append(solution, currentReleases)
 			currentReleases = make([]*pbrc.Record, 0)
 			boundaryValue += boundaryAccumulator
 		}
 
 		currentReleases = append(currentReleases, rel)
-		currentValue += float64(rel.GetRelease().FormatQuantity)
+		currentValue += getFormatWidth(rel)
 	}
 	solution = append(solution, currentReleases)
 
