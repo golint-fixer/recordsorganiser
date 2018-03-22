@@ -39,16 +39,14 @@ func (s *Server) Locate(ctx context.Context, req *pb.LocateRequest) (*pb.LocateR
 //AddLocation adds a location
 func (s *Server) AddLocation(ctx context.Context, req *pb.AddLocationRequest) (*pb.AddLocationResponse, error) {
 	s.prepareForReorg()
-
 	s.org.Locations = append(s.org.Locations, req.GetAdd())
+	s.saveOrg()
 
 	_, err := s.organise(s.org)
 
 	if err != nil {
 		return &pb.AddLocationResponse{}, err
 	}
-
-	s.saveOrg()
 
 	return &pb.AddLocationResponse{Now: s.org}, nil
 }

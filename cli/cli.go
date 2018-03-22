@@ -51,6 +51,11 @@ func locateRelease(ctx context.Context, c pb.OrganiserServiceClient, id int32) {
 	if err != nil {
 		log.Fatalf("Unable to get record %v -> %v", id, err)
 	}
+
+	if len(recs.GetRecords()) == 0 {
+		fmt.Printf("No records with that id\n")
+	}
+
 	for _, rec := range recs.GetRecords() {
 		location, err := c.Locate(ctx, &pb.LocateRequest{InstanceId: rec.GetRelease().InstanceId})
 		if err != nil {
@@ -330,6 +335,7 @@ func main() {
 		var sort = updateLocationFlags.String("sort", "", "The new sorting mechanism")
 		var alert = updateLocationFlags.Bool("alert", true, "Whether we should alert on this location")
 		var spill = updateLocationFlags.Int("spill", 0, "The spill folder for this location")
+		var slots = updateLocationFlags.Int("slots", 0, "The new number of slots for this location")
 		if err := updateLocationFlags.Parse(os.Args[2:]); err == nil {
 			if *folder > 0 {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{FolderIds: []int32{int32(*folder)}}})
@@ -347,6 +353,9 @@ func main() {
 			}
 			if *spill != 0 {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{SpillFolder: int32(*spill)}})
+			}
+			if *slots != 0 {
+				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{Slots: int32(*slots)}})
 			}
 		}
 	}
