@@ -23,6 +23,23 @@ func TestSortByDateAdded(t *testing.T) {
 	}
 }
 
+func TestSortByDateAddedProper(t *testing.T) {
+	releases := []*pbrc.Record{
+		&pbrc.Record{Release: &pbd.Release{Id: 2}, Metadata: &pbrc.ReleaseMetadata{DateAdded: 1516927655}},
+		&pbrc.Record{Release: &pbd.Release{Id: 3}, Metadata: &pbrc.ReleaseMetadata{DateAdded: 1521687761}},
+		&pbrc.Record{Release: &pbd.Release{Id: 2}, Metadata: &pbrc.ReleaseMetadata{DateAdded: 1}},
+		&pbrc.Record{Release: &pbd.Release{Id: 4}, Metadata: &pbrc.ReleaseMetadata{DateAdded: 1520384637}},
+	}
+
+	sort.Sort(ByDateAdded(releases))
+
+	for i := 1; i < len(releases); i++ {
+		if releases[i].Metadata.DateAdded < releases[i-1].Metadata.DateAdded {
+			t.Fatalf("Error in sorting by date added: %v", releases)
+		}
+	}
+}
+
 func TestSortByLabelCat(t *testing.T) {
 	releases := []*pbrc.Record{
 		&pbrc.Record{Release: &pbd.Release{Id: 2, Labels: []*pbd.Label{&pbd.Label{Name: "TestOne"}}}, Metadata: &pbrc.ReleaseMetadata{DateAdded: 125}},

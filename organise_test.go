@@ -176,19 +176,19 @@ func (discogsBridge testBridge) getReleases(folders []int32) ([]*pbrc.Record, er
 		Labels:         []*pbd.Label{&pbd.Label{Name: "FirstLabel"}},
 		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
 		FormatQuantity: 2,
-	}})
+	}, Metadata: &pbrc.ReleaseMetadata{DateAdded: time.Now().AddDate(0, -4, 0).Unix()}})
 	result = append(result, &pbrc.Record{Release: &pbd.Release{
 		Id:             2,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "SecondLabel"}},
 		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
 		FormatQuantity: 1,
-	}})
+	}, Metadata: &pbrc.ReleaseMetadata{DateAdded: time.Now().AddDate(0, -4, 0).Unix()}})
 	result = append(result, &pbrc.Record{Release: &pbd.Release{
 		Id:             3,
 		Labels:         []*pbd.Label{&pbd.Label{Name: "ThirdLabel"}},
 		Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"CD"}}},
 		FormatQuantity: 1,
-	}})
+	}, Metadata: &pbrc.ReleaseMetadata{DateAdded: time.Now().AddDate(0, -4, 0).Unix()}})
 
 	return result, nil
 }
@@ -264,6 +264,21 @@ func getTestServerWithMove(dir string) *Server {
 }
 
 func TestAddLocation(t *testing.T) {
+	testServer := getTestServer(".testAddLocation")
+	location := &pb.Location{
+		Name:      "TestName",
+		Slots:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+
+	_, err := testServer.AddLocation(context.Background(), &pb.AddLocationRequest{Add: location})
+	if err != nil {
+		t.Errorf("Error on adding location: %v", err)
+	}
+}
+
+func TestAddLocationByDate(t *testing.T) {
 	testServer := getTestServer(".testAddLocation")
 	location := &pb.Location{
 		Name:      "TestName",

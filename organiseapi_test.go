@@ -57,7 +57,7 @@ func TestGetLocation(t *testing.T) {
 		Name:      "TestName",
 		Slots:     2,
 		FolderIds: []int32{10},
-		Sort:      pb.Location_BY_DATE_ADDED,
+		Sort:      pb.Location_BY_LABEL_CATNO,
 	}
 
 	_, err := testServer.AddLocation(context.Background(), &pb.AddLocationRequest{Add: location})
@@ -80,7 +80,7 @@ func TestGetLocationOrgFail(t *testing.T) {
 		Name:      "TestName",
 		Slots:     2,
 		FolderIds: []int32{10},
-		Sort:      pb.Location_BY_DATE_ADDED,
+		Sort:      pb.Location_BY_LABEL_CATNO,
 	}
 
 	_, err := testServer.AddLocation(context.Background(), &pb.AddLocationRequest{Add: location})
@@ -102,7 +102,7 @@ func TestUpdateLocation(t *testing.T) {
 		Name:      "TestName",
 		Slots:     2,
 		FolderIds: []int32{10},
-		Sort:      pb.Location_BY_DATE_ADDED,
+		Sort:      pb.Location_BY_LABEL_CATNO,
 		Quota:     &pb.Quota{NumOfSlots: 2},
 	}
 
@@ -142,7 +142,7 @@ func TestGetOverQuota(t *testing.T) {
 		Name:      "TestName",
 		Slots:     2,
 		FolderIds: []int32{10},
-		Sort:      pb.Location_BY_DATE_ADDED,
+		Sort:      pb.Location_BY_LABEL_CATNO,
 		Quota:     &pb.Quota{NumOfSlots: 2},
 	}
 
@@ -172,7 +172,7 @@ func TestGetUnderQuota(t *testing.T) {
 		Name:      "TestName",
 		Slots:     2,
 		FolderIds: []int32{10},
-		Sort:      pb.Location_BY_DATE_ADDED,
+		Sort:      pb.Location_BY_LABEL_CATNO,
 		Quota:     &pb.Quota{NumOfSlots: 4},
 	}
 
@@ -202,7 +202,7 @@ func TestGetQuotaFail(t *testing.T) {
 		Name:      "TestName",
 		Slots:     2,
 		FolderIds: []int32{10},
-		Sort:      pb.Location_BY_DATE_ADDED,
+		Sort:      pb.Location_BY_LABEL_CATNO,
 		Quota:     &pb.Quota{NumOfSlots: 4},
 	}
 

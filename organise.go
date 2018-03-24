@@ -58,6 +58,8 @@ func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
 
 	switch c.GetSort() {
 	case pb.Location_BY_DATE_ADDED:
+		sort.Sort(ByDateAdded(fr))
+	case pb.Location_BY_LABEL_CATNO:
 		sort.Sort(ByLabelCat(fr))
 	}
 
