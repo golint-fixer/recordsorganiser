@@ -94,7 +94,7 @@ func getReleaseString(instanceID int32) string {
 	if err != nil {
 		log.Fatalf("unable to get record: %v", err)
 	}
-	return rel.GetRecords()[0].GetRelease().Title
+	return rel.GetRecords()[0].GetRelease().Title + " [" + strconv.Itoa(int(instanceID)) + "]"
 }
 
 func get(ctx context.Context, client pb.OrganiserServiceClient, name string, force bool, slot int32) {
