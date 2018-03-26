@@ -49,6 +49,9 @@ func sortByLabelCat(rel1, rel2 pb.Release) int {
 	cat2Elems := split(label2.Catno)
 
 	toCheck := len(cat1Elems)
+	if len(cat2Elems) < toCheck {
+		toCheck = len(cat2Elems)
+	}
 
 	for i := 0; i < toCheck; i++ {
 		if unicode.IsNumber(rune(cat1Elems[i][0])) && unicode.IsNumber(rune(cat2Elems[i][0])) {
