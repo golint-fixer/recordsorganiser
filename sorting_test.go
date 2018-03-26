@@ -54,6 +54,20 @@ func TestSortByLabelCat(t *testing.T) {
 	}
 }
 
+func TestSortByLabelCatWhenCatImbalance(t *testing.T) {
+	releases := []*pbrc.Record{
+		&pbrc.Record{Release: &pbd.Release{Id: 2, Labels: []*pbd.Label{&pbd.Label{Name: "TestOne", Catno: "1234-"}}}, Metadata: &pbrc.ReleaseMetadata{DateAdded: 125}},
+		&pbrc.Record{Release: &pbd.Release{Id: 3, Labels: []*pbd.Label{&pbd.Label{Name: "TestOne", Catno: "1234-1234"}}}, Metadata: &pbrc.ReleaseMetadata{DateAdded: 124}},
+		&pbrc.Record{Release: &pbd.Release{Id: 4, Labels: []*pbd.Label{&pbd.Label{Name: "TestA"}}}, Metadata: &pbrc.ReleaseMetadata{DateAdded: 123}},
+	}
+
+	sort.Sort(ByLabelCat(releases))
+
+	if releases[0].Release.Id != 4 {
+		t.Errorf("Releases are not correctly ordered: %v", releases)
+	}
+}
+
 func TestSortByDateAddedWithFallback(t *testing.T) {
 	releases := []*pbrc.Record{
 		&pbrc.Record{Release: &pbd.Release{Title: "Second", Id: 2}, Metadata: &pbrc.ReleaseMetadata{DateAdded: 124}},
