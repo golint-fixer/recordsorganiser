@@ -358,5 +358,13 @@ func main() {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{Slots: int32(*slots)}})
 			}
 		}
+	case "extractor":
+		extractFlags := flag.NewFlagSet("Extract", flag.ExitOnError)
+		var label = extractFlags.Int("id", -1, "The ID of the label")
+		var reg = extractFlags.String("extract", "", "The extractor")
+		if err := extractFlags.Parse(os.Args[2:]); err == nil {
+			client.AddExtractor(ctx, &pb.AddExtractorRequest{Extractor: &pb.LabelExtractor{LabelId: int32(*label), Extractor: *reg}})
+		}
 	}
+
 }

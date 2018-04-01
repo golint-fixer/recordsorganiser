@@ -102,3 +102,10 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 	s.LogFunction("GetQuota-notfound", t)
 	return &pb.QuotaResponse{}, fmt.Errorf("Unable to locate folder in request (%v)", req.GetFolderId())
 }
+
+// AddExtractor adds an extractor
+func (s *Server) AddExtractor(ctx context.Context, req *pb.AddExtractorRequest) (*pb.AddExtractorResponse, error) {
+	s.org.Extractors = append(s.org.Extractors, req.Extractor)
+	s.saveOrg()
+	return &pb.AddExtractorResponse{}, nil
+}
