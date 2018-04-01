@@ -47,7 +47,7 @@ func TestSortByLabelCat(t *testing.T) {
 		&pbrc.Record{Release: &pbd.Release{Id: 4, Labels: []*pbd.Label{&pbd.Label{Name: "TestA"}}}, Metadata: &pbrc.ReleaseMetadata{DateAdded: 123}},
 	}
 
-	sort.Sort(ByLabelCat(releases))
+	sort.Sort(ByLabelCat{releases, make(map[int32]string)})
 
 	if releases[0].Release.Id != 4 {
 		t.Errorf("Releases are not correctly ordered: %v", releases)
@@ -61,7 +61,7 @@ func TestSortByLabelCatWhenCatImbalance(t *testing.T) {
 		&pbrc.Record{Release: &pbd.Release{Id: 4, Labels: []*pbd.Label{&pbd.Label{Name: "TestA"}}}, Metadata: &pbrc.ReleaseMetadata{DateAdded: 123}},
 	}
 
-	sort.Sort(ByLabelCat(releases))
+	sort.Sort(ByLabelCat{releases, make(map[int32]string)})
 
 	if releases[0].Release.Id != 4 {
 		t.Errorf("Releases are not correctly ordered: %v", releases)
@@ -109,19 +109,19 @@ var defaultComp = []struct {
 
 func TestSortingByLabelCat(t *testing.T) {
 	for _, tt := range sortTests {
-		sValue := sortByLabelCat(tt.r1, tt.r2)
+		sValue := sortByLabelCat(&tt.r1, &tt.r2, make(map[int32]string))
 		if sValue >= 0 {
 			t.Errorf("%v should come before %v (%v)", tt.r1, tt.r2, sValue)
 		}
-		sValueR := sortByLabelCat(tt.r2, tt.r1)
+		sValueR := sortByLabelCat(&tt.r2, &tt.r1, make(map[int32]string))
 		if sValueR <= 0 {
 			t.Errorf("%v should come before %v (%v)", tt.r1, tt.r2, sValueR)
 		}
 	}
 
 	tt := defaultComp[0]
-	sValue := sortByLabelCat(tt.r1, tt.r2)
-	sValue2 := sortByLabelCat(tt.r2, tt.r1)
+	sValue := sortByLabelCat(&tt.r1, &tt.r2, make(map[int32]string))
+	sValue2 := sortByLabelCat(&tt.r2, &tt.r1, make(map[int32]string))
 	if sValue != 0 || sValue2 != 0 {
 		t.Errorf("Default is not zero: %v and %v", sValue, sValue2)
 	}
@@ -148,4 +148,33 @@ func TestGetFormatWidth(t *testing.T) {
 		t.Errorf("Bad width: %v", v)
 	}
 	log.Printf("GOOD WIDTH = %v", v)
+}
+
+func TestExtractorSplit(t *testing.T) {
+	m := make(map[int32]string)
+	m[int32(123)] = "(5\\d\\d)"
+	vals := doExtractorSplit(&pbd.Label{Catno: "MPI-503", Id: 123}, m)
+
+	if len(vals) != 1 {
+		t.Errorf("Bad extraction: %v", vals)
+	}
+}
+
+func TestExtractorSplitBadExtractor(t *testing.T) {
+	m := make(map[int32]string)
+	m[int32(123)] = "(5\\d\\d"
+	vals := doExtractorSplit(&pbd.Label{Catno: "MPI-503", Id: 123}, m)
+
+	if len(vals) != 0 {
+		t.Errorf("Bad extraction: %v", vals)
+	}
+}
+
+func TestExtractorSplitNoCandidates(t *testing.T) {
+	m := make(map[int32]string)
+	vals := doExtractorSplit(&pbd.Label{Catno: "MPI-503", Id: 123}, m)
+
+	if len(vals) != 0 {
+		t.Errorf("Bad extraction: %v", vals)
+	}
 }

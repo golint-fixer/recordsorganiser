@@ -46,6 +46,14 @@ func (s *Server) organise(c *pb.Organisation) (int32, error) {
 	return num, nil
 }
 
+func convert(exs []*pb.LabelExtractor) map[int32]string {
+	m := make(map[int32]string)
+	for _, ex := range exs {
+		m[ex.LabelId] = ex.Extractor
+	}
+	return m
+}
+
 func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
 	fr, err := s.bridge.getReleases(c.GetFolderIds())
 	if err != nil {
@@ -56,7 +64,7 @@ func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
 	case pb.Location_BY_DATE_ADDED:
 		sort.Sort(ByDateAdded(fr))
 	case pb.Location_BY_LABEL_CATNO:
-		sort.Sort(ByLabelCat(fr))
+		sort.Sort(ByLabelCat{fr, convert(s.org.GetExtractors())})
 	}
 
 	records := Split(fr, float64(c.GetSlots()))
