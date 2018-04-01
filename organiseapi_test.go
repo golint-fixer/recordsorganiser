@@ -221,3 +221,11 @@ func TestGetQuotaFail(t *testing.T) {
 		t.Errorf("No errror on bad quota: %v", err)
 	}
 }
+
+func TestAddExtractor(t *testing.T) {
+	testServer := getTestServer(".addExtractor")
+	_, err := testServer.AddExtractor(context.Background(), &pb.AddExtractorRequest{Extractor: &pb.LabelExtractor{LabelId: 1234, Extractor: "hello"}})
+	if err != nil {
+		t.Errorf("Error adding label")
+	}
+}
