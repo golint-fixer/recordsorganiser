@@ -23,20 +23,40 @@ func (a ByDateAdded) Less(i, j int) bool {
 }
 
 // ByLabelCat allows sorting of releases by the date they were added
-type ByLabelCat []*pbrc.Record
+type ByLabelCat struct {
+	records    []*pbrc.Record
+	extractors map[int32]string
+}
 
-func (a ByLabelCat) Len() int      { return len(a) }
-func (a ByLabelCat) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByLabelCat) Len() int      { return len(a.records) }
+func (a ByLabelCat) Swap(i, j int) { a.records[i], a.records[j] = a.records[j], a.records[i] }
 func (a ByLabelCat) Less(i, j int) bool {
-	return sortByLabelCat(*a[i].GetRelease(), *a[j].GetRelease()) < 0
+	return sortByLabelCat(a.records[i].GetRelease(), a.records[j].GetRelease(), a.extractors) < 0
 }
 
 func split(str string) []string {
 	return regexp.MustCompile("[0-9]+|[a-z]+|[A-Z]+").FindAllString(str, -1)
 }
 
+func doExtractorSplit(label *pb.Label, ex map[int32]string) []string {
+	if val, ok := ex[label.Id]; ok {
+		r, err := regexp.Compile(val)
+		if err != nil {
+			return make([]string, 0)
+		}
+		vals := r.FindAllStringSubmatch(label.Catno, -1)
+		ret := make([]string, 0)
+		for _, pair := range vals {
+			ret = append(ret, pair[1])
+		}
+		return ret
+	}
+
+	return make([]string, 0)
+}
+
 // Sorts by label and then catalogue number
-func sortByLabelCat(rel1, rel2 pb.Release) int {
+func sortByLabelCat(rel1, rel2 *pb.Release, extractors map[int32]string) int {
 	label1 := pb.GetMainLabel(rel1.Labels)
 	label2 := pb.GetMainLabel(rel2.Labels)
 
