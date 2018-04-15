@@ -89,12 +89,28 @@ func getFormatWidth(r *pbrc.Record) float64 {
 
 	// Death Waltz release are thicker than average
 	deathWaltz := false
+	gatefold := false
+	boxset := false
 	for _, label := range r.GetRelease().GetLabels() {
 		if label.Name == "Death Waltz Recording Company" {
 			deathWaltz = true
 		}
 	}
+	for _, format := range r.GetRelease().GetFormats() {
+		if strings.Contains(format.Text, "Gatefold") {
+			gatefold = true
+		}
+		if strings.Contains(format.Text, "Box") {
+			boxset = true
+		}
+	}
 	if deathWaltz {
+		v++
+	}
+	if boxset {
+		v++
+	}
+	if gatefold {
 		v++
 	}
 
