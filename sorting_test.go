@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"sort"
 	"testing"
 
@@ -147,7 +146,20 @@ func TestGetFormatWidth(t *testing.T) {
 	if v != 2.0 {
 		t.Errorf("Bad width: %v", v)
 	}
-	log.Printf("GOOD WIDTH = %v", v)
+}
+
+func TestGetFormatWidthForBox(t *testing.T) {
+	v := getFormatWidth(&pbrc.Record{Release: &pbd.Release{FormatQuantity: 4, Formats: []*pbd.Format{&pbd.Format{Text: "Boxset"}}}})
+	if v != 5.0 {
+		t.Errorf("Bad width: %v", v)
+	}
+}
+
+func TestGetFormatWidthForGatefold(t *testing.T) {
+	v := getFormatWidth(&pbrc.Record{Release: &pbd.Release{FormatQuantity: 1, Formats: []*pbd.Format{&pbd.Format{Text: "Gatefold"}}}})
+	if v != 2.0 {
+		t.Errorf("Bad width: %v", v)
+	}
 }
 
 func TestExtractorSplit(t *testing.T) {
