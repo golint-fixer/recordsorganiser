@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -26,19 +27,20 @@ func (a ByDateAdded) Less(i, j int) bool {
 type ByLabelCat struct {
 	records    []*pbrc.Record
 	extractors map[int32]string
+	logger     func(string)
 }
 
 func (a ByLabelCat) Len() int      { return len(a.records) }
 func (a ByLabelCat) Swap(i, j int) { a.records[i], a.records[j] = a.records[j], a.records[i] }
 func (a ByLabelCat) Less(i, j int) bool {
-	return sortByLabelCat(a.records[i].GetRelease(), a.records[j].GetRelease(), a.extractors) < 0
+	return sortByLabelCat(a.records[i].GetRelease(), a.records[j].GetRelease(), a.extractors, a.logger) < 0
 }
 
 func split(str string) []string {
 	return regexp.MustCompile("[0-9]+|[a-z]+|[A-Z]+").FindAllString(str, -1)
 }
 
-func doExtractorSplit(label *pb.Label, ex map[int32]string) []string {
+func doExtractorSplit(label *pb.Label, ex map[int32]string, logger func(string)) []string {
 	if val, ok := ex[label.Id]; ok {
 		r, err := regexp.Compile(val)
 		if err != nil {
@@ -49,6 +51,7 @@ func doExtractorSplit(label *pb.Label, ex map[int32]string) []string {
 		for _, pair := range vals {
 			ret = append(ret, pair[1])
 		}
+		logger(fmt.Sprintf("RAN ON %v got %v", label, ret))
 		return ret
 	}
 
@@ -56,7 +59,7 @@ func doExtractorSplit(label *pb.Label, ex map[int32]string) []string {
 }
 
 // Sorts by label and then catalogue number
-func sortByLabelCat(rel1, rel2 *pb.Release, extractors map[int32]string) int {
+func sortByLabelCat(rel1, rel2 *pb.Release, extractors map[int32]string, logger func(string)) int {
 	label1 := pb.GetMainLabel(rel1.Labels)
 	label2 := pb.GetMainLabel(rel2.Labels)
 
@@ -65,8 +68,13 @@ func sortByLabelCat(rel1, rel2 *pb.Release, extractors map[int32]string) int {
 		return labelSort
 	}
 
-	cat1Elems := split(label1.Catno)
-	cat2Elems := split(label2.Catno)
+	cat1Elems := doExtractorSplit(label1, extractors, logger)
+	cat2Elems := doExtractorSplit(label2, extractors, logger)
+
+	if len(cat1Elems) == 0 || len(cat1Elems) != len(cat2Elems) {
+		cat1Elems = split(label1.Catno)
+		cat2Elems = split(label2.Catno)
+	}
 
 	toCheck := len(cat1Elems)
 	if len(cat2Elems) < toCheck {
