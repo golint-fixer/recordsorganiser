@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/brotherlogic/goserver"
@@ -64,6 +65,7 @@ func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
 	case pb.Location_BY_DATE_ADDED:
 		sort.Sort(ByDateAdded(fr))
 	case pb.Location_BY_LABEL_CATNO:
+		s.Log(fmt.Sprintf("Sorting: %v", s.org.GetExtractors()))
 		sort.Sort(ByLabelCat{fr, convert(s.org.GetExtractors())})
 	}
 
