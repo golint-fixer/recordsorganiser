@@ -7,8 +7,10 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/brotherlogic/goserver/utils"
-	pb "github.com/brotherlogic/recordsorganiser/proto"
 	"github.com/golang/protobuf/proto"
+
+	pb "github.com/brotherlogic/recordsorganiser/proto"
+	pbt "github.com/brotherlogic/tracer/proto"
 )
 
 // UpdateLocation updates a given location
@@ -79,6 +81,7 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 
 // GetQuota fills out the quota response
 func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaResponse, error) {
+	s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_START_FUNCTION)
 	t := time.Now()
 	for _, loc := range s.org.GetLocations() {
 		for _, id := range loc.GetFolderIds() {
@@ -90,16 +93,19 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 					if !loc.GetNoAlert() {
 						s.gh.alert(loc)
 					}
+					s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
 					return &pb.QuotaResponse{SpillFolder: loc.SpillFolder, OverQuota: true, LocationName: loc.GetName()}, nil
 				}
 
 				s.LogFunction("GetQuota-false", t)
+				s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
 				return &pb.QuotaResponse{OverQuota: false, LocationName: loc.GetName()}, nil
 			}
 		}
 	}
 
 	s.LogFunction("GetQuota-notfound", t)
+	s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
 	return &pb.QuotaResponse{}, fmt.Errorf("Unable to locate folder in request (%v)", req.GetFolderId())
 }
 

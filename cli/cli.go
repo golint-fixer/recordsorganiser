@@ -243,6 +243,7 @@ func main() {
 		var name = sellFlags.String("name", "", "The name of the location to get")
 		var assess = sellFlags.Bool("assess", false, "Auto assess the for sale records")
 		var forcesell = sellFlags.Bool("force", false, "Auto assess the for sale records")
+		var limit = sellFlags.Int("limit", -1, "Limit to include")
 
 		if err := sellFlags.Parse(os.Args[2:]); err == nil {
 			host, port, err := utils.Resolve("recordcollection")
@@ -282,6 +283,10 @@ func main() {
 						}
 					}
 				}
+			}
+
+			if *limit > 0 && int(minScore) < *limit {
+				minScore = int32(*limit)
 			}
 
 			for _, r := range records {
