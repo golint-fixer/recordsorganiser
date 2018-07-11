@@ -166,6 +166,47 @@ func TestGetOverQuota(t *testing.T) {
 	}
 }
 
+func TestGetOverQuotaWithListeningPile(t *testing.T) {
+	testServer := getTestServer(".testQuotaWithPile")
+	location := &pb.Location{
+		Name:      "TestName",
+		Slots:     1,
+		FolderIds: []int32{25},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+		Quota:     &pb.Quota{NumOfSlots: 4},
+	}
+
+	l, err := testServer.AddLocation(context.Background(), &pb.AddLocationRequest{Add: location})
+	if err != nil {
+		t.Fatalf("Error in adding location: %v", err)
+	}
+
+	pile := &pb.Location{
+		Name:      "Listening Pile",
+		Slots:     1,
+		FolderIds: []int32{812802},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+	_, err = testServer.AddLocation(context.Background(), &pb.AddLocationRequest{Add: pile})
+	if err != nil {
+		t.Fatalf("Error in adding location: %v", err)
+	}
+
+	if len(l.GetNow().GetLocations()[0].GetReleasesLocation()) == 0 {
+		t.Fatalf("No releases at the new location")
+	}
+
+	quota, err := testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 25})
+
+	if err != nil {
+		t.Fatalf("Error getting quota: %v", err)
+	}
+
+	if !quota.GetOverQuota() {
+		t.Errorf("Reported under quota?: %v", quota)
+	}
+}
+
 func TestGetUnderQuota(t *testing.T) {
 	testServer := getTestServer(".testQuota")
 	location := &pb.Location{
