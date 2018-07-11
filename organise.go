@@ -3,9 +3,9 @@ package main
 import (
 	"sort"
 
+	pbs "github.com/brotherlogic/discogssyncer/server"
 	"github.com/brotherlogic/goserver"
 
-	pbs "github.com/brotherlogic/discogssyncer/server"
 	pbd "github.com/brotherlogic/godiscogs"
 	pbrc "github.com/brotherlogic/recordcollection/proto"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
