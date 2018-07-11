@@ -25,7 +25,7 @@ type gh interface {
 
 type discogsBridge interface {
 	getReleases(folders []int32) ([]*pbrc.Record, error)
-	getMetadata(release *pbd.Release) (*pbs.ReleaseMetadata, error)
+	getMetadata(release *pbd.Release) (*pbrc.ReleaseMetadata, error)
 	moveToFolder(releaseMove *pbs.ReleaseMove)
 	GetIP(string) (string, int)
 }

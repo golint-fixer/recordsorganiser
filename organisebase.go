@@ -73,15 +73,17 @@ func (discogsBridge prodBridge) GetIP(name string) (string, int) {
 	return discogsBridge.Resolver(name)
 }
 
-func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
-	ip, port := discogsBridge.GetIP("discogssyncer")
+func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
+	ip, port := discogsBridge.GetIP("recordcollection")
 	conn, err2 := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 	if err2 == nil {
 		defer conn.Close()
-		client := pbs.NewDiscogsServiceClient(conn)
-		meta, err3 := client.GetMetadata(context.Background(), rel)
-		if err3 == nil {
-			return meta, nil
+		client := pbrc.NewRecordCollectionServiceClient(conn)
+		meta, err3 := client.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: rel}})
+		if err3 == nil && len(meta.Records) == 0 {
+			return meta.Records[0].Metadata, nil
+		} else {
+			return nil, fmt.Errorf("Problem getting meta %v and %v", err3, len(meta.Records))
 		}
 	}
 

@@ -21,7 +21,7 @@ func (discogsBridge testBridgeFail) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridgeFail) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
+func (discogsBridge testBridgeFail) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
 	return nil, errors.New("Built to fail")
 }
 func (discogsBridge testBridgeFail) getReleases(folders []int32) ([]*pbrc.Record, error) {
@@ -40,7 +40,7 @@ func (discogsBridge testBridgePartialFail) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridgePartialFail) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
+func (discogsBridge testBridgePartialFail) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
 	return nil, errors.New("Built to fail")
 }
 func (discogsBridge testBridgePartialFail) getReleases(folders []int32) ([]*pbrc.Record, error) {
@@ -80,8 +80,8 @@ func (discogsBridge testBridgeCleverFail) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridgeCleverFail) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
-	metadata := &pbs.ReleaseMetadata{}
+func (discogsBridge testBridgeCleverFail) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
+	metadata := &pbrc.ReleaseMetadata{}
 	switch rel.Id {
 	case 1:
 		metadata.DateAdded = time.Now().Unix()
@@ -142,8 +142,8 @@ func (discogsBridge testBridge) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridge) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
-	metadata := &pbs.ReleaseMetadata{}
+func (discogsBridge testBridge) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
+	metadata := &pbrc.ReleaseMetadata{}
 	switch rel.Id {
 	case 1:
 		metadata.DateAdded = time.Now().Unix()
@@ -155,8 +155,8 @@ func (discogsBridge testBridge) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetad
 	return metadata, nil
 }
 
-func (discogsBridge testBridgeMove) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
-	metadata := &pbs.ReleaseMetadata{}
+func (discogsBridge testBridgeMove) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
+	metadata := &pbrc.ReleaseMetadata{}
 	switch rel.Id {
 	case 1:
 		metadata.DateAdded = time.Now().Unix()
