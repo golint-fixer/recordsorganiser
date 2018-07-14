@@ -80,7 +80,7 @@ func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMeta
 		defer conn.Close()
 		client := pbrc.NewRecordCollectionServiceClient(conn)
 		meta, err3 := client.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: rel}})
-		if err3 == nil && len(meta.Records) == 0 && meta.Records[0].Metadata != nil {
+		if err3 == nil && meta != nil && len(meta.Records) == 0 && meta.Records[0].Metadata != nil {
 			return meta.Records[0].Metadata, nil
 		}
 		return nil, fmt.Errorf("Problem getting meta %v and %v", err3, len(meta.Records))
