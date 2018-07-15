@@ -27,3 +27,6 @@ _testmain.go
 recordsorganiser
 .test*
 hash
+
+.addExtractor
+timing
