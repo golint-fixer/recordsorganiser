@@ -83,7 +83,7 @@ func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMeta
 		if err3 == nil && meta != nil && len(meta.Records) == 1 && meta.Records[0].Metadata != nil {
 			return meta.Records[0].Metadata, nil
 		}
-		return nil, fmt.Errorf("Problem getting meta %v and %v", err3, len(meta.Records))
+		return nil, fmt.Errorf("Problem getting meta %v and %v", err3, meta)
 	}
 
 	return nil, fmt.Errorf("Unable to get release metadata: %v", err2)
