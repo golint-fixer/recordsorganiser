@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/brotherlogic/goserver/utils"
 	"github.com/golang/protobuf/proto"
@@ -132,7 +134,7 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 
 	s.LogFunction("GetQuota-notfound", t)
 	s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
-	return &pb.QuotaResponse{}, fmt.Errorf("Unable to locate folder in request (%v)", req.GetFolderId())
+	return &pb.QuotaResponse{}, status.Error(codes.InvalidArgument, fmt.Sprintf("Unable to locate folder in request (%v)", req.GetFolderId()))
 }
 
 // AddExtractor adds an extractor
