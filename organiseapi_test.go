@@ -155,7 +155,7 @@ func TestGetOverQuota(t *testing.T) {
 		t.Fatalf("No releases at the new location")
 	}
 
-	quota, err := testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 10})
+	quota, err := testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 10, IncludeRecords: true})
 
 	if err != nil {
 		t.Fatalf("Error getting quota: %v", err)
@@ -196,7 +196,7 @@ func TestGetOverQuotaWithListeningPile(t *testing.T) {
 		t.Fatalf("No releases at the new location")
 	}
 
-	quota, err := testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 25})
+	quota, err := testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 25, IncludeRecords: true})
 
 	if err != nil {
 		t.Fatalf("Error getting quota: %v", err)
@@ -226,7 +226,7 @@ func TestGetUnderQuota(t *testing.T) {
 		t.Fatalf("No releases at the new location")
 	}
 
-	quota, err := testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 10})
+	quota, err := testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 10, IncludeRecords: true})
 
 	if err != nil {
 		t.Fatalf("Error getting quota: %v", err)
@@ -256,7 +256,7 @@ func TestGetQuotaFail(t *testing.T) {
 		t.Fatalf("No releases at the new location")
 	}
 
-	_, err = testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 20})
+	_, err = testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 20, IncludeRecords: true})
 
 	if err == nil {
 		t.Errorf("No errror on bad quota: %v", err)
