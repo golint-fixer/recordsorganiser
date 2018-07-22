@@ -89,6 +89,8 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 	s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_START_FUNCTION)
 	t := time.Now()
 
+	instanceIds := []int32{}
+
 	//Compute the count of valid records in the listening pile
 	count := 0
 	for _, loc := range s.org.GetLocations() {
@@ -102,11 +104,12 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 				if err == nil {
 					if meta.GoalFolder == req.GetFolderId() {
 						if meta.Category != pbrc.ReleaseMetadata_UNLISTENED && meta.Category != pbrc.ReleaseMetadata_STAGED {
+							if req.IncludeRecords {
+								instanceIds = append(instanceIds, place.InstanceId)
+							}
 							count++
 						}
 					}
-				} else {
-					s.Log(fmt.Sprintf("Logged quota: %v", err))
 				}
 			}
 		}
@@ -124,7 +127,13 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 						s.gh.alert(loc)
 					}
 					s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
-					return &pb.QuotaResponse{SpillFolder: loc.SpillFolder, OverQuota: true, LocationName: loc.GetName()}, nil
+					if req.IncludeRecords {
+						for _, in := range loc.ReleasesLocation {
+							instanceIds = append(instanceIds, in.InstanceId)
+						}
+					}
+
+					return &pb.QuotaResponse{SpillFolder: loc.SpillFolder, OverQuota: true, LocationName: loc.GetName(), InstanceId: instanceIds}, nil
 				}
 
 				s.LogFunction("GetQuota-false", t)

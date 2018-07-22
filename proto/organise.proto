@@ -112,12 +112,14 @@ message LocateResponse {
 
 message QuotaRequest {
   int32 folder_id = 1;
+  bool include_records = 2;
 }
 
 message QuotaResponse {
   bool over_quota = 1;
   int32 spill_folder = 2;
   string location_name = 3;
+  repeated int32 instance_id = 4;
 }
 
 message UpdateLocationRequest {
