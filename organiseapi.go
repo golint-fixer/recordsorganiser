@@ -105,6 +105,8 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 							count++
 						}
 					}
+				} else {
+					s.Log(fmt.Sprintf("Logged quota: %v", err))
 				}
 			}
 		}
