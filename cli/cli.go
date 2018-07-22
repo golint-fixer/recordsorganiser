@@ -237,6 +237,9 @@ func main() {
 			}
 			fmt.Printf("COUNT = %v\n", count)
 			fmt.Printf("We have to sell %v records to meet this\n", count-int(loc.GetLocations()[0].Quota.GetNumOfSlots())+10)
+
+			quot, err := client.GetQuota(ctx, &pb.QuotaRequest{FolderId: 242017})
+			fmt.Printf("%v and %v\n", quot, err)
 		}
 	case "sell":
 		sellFlags := flag.NewFlagSet("sell", flag.ExitOnError)
