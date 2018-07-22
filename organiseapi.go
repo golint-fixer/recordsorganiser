@@ -118,7 +118,7 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 
 	for _, loc := range s.org.GetLocations() {
 		for _, id := range loc.GetFolderIds() {
-			if id == req.GetFolderId() {
+			if id == req.GetFolderId() || (req.Name == loc.Name) {
 				s.organiseLocation(loc)
 
 				if loc.GetQuota().GetNumOfSlots() > 0 && len(loc.GetReleasesLocation())+count >= int(loc.GetQuota().GetNumOfSlots()) {

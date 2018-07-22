@@ -262,7 +262,7 @@ func main() {
 
 			rclient := pbrc.NewRecordCollectionServiceClient(conn)
 
-			loc, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{Locations: []*pb.Location{&pb.Location{Name: *name}}})
+			loc, err := client.GetQuota(ctx, &pb.QuotaRequest{IncludeRecords: true, Name: *name})
 			if err != nil {
 				log.Fatalf("ERRR: %v", err)
 			}
@@ -270,20 +270,16 @@ func main() {
 			records := make([]*pbrc.Record, 0)
 			minScore := int32(6)
 			foundOthers := false
-			for _, l := range loc.GetLocations() {
-				for _, id := range l.GetFolderIds() {
-					recs, err := rclient.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{}, Metadata: &pbrc.ReleaseMetadata{GoalFolder: id}}})
-					if err != nil {
-						log.Fatalf("Error : %v", err)
-					}
+			for _, i := range loc.InstanceId {
+				recs, err := rclient.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: i}, Metadata: &pbrc.ReleaseMetadata{}}})
+				if err != nil {
+					log.Fatalf("Error : %v", err)
+				}
 
-					for _, r := range recs.GetRecords() {
-						if r.GetRelease().Rating > 0 && r.GetMetadata().Category != pbrc.ReleaseMetadata_STAGED && r.GetMetadata().Category != pbrc.ReleaseMetadata_STAGED_TO_SELL && r.GetMetadata().Category != pbrc.ReleaseMetadata_SOLD {
-							records = append(records, r)
-							if r.GetRelease().Rating < minScore {
-								minScore = r.GetRelease().Rating
-							}
-						}
+				for _, r := range recs.GetRecords() {
+					records = append(records, r)
+					if r.GetRelease().Rating < minScore {
+						minScore = r.GetRelease().Rating
 					}
 				}
 			}
@@ -300,12 +296,11 @@ func main() {
 
 			}
 
-			fmt.Printf("FOUND %v [%v] - need to sell %v\n", len(records), minScore, len(records)-int(loc.GetLocations()[0].GetQuota().GetNumOfSlots()))
 			if foundOthers {
 				fmt.Printf("These have others - auto sell\n")
 			}
 
-			total := len(records) - int(loc.GetLocations()[0].GetQuota().GetNumOfSlots()) + 10
+			total := len(records) - 500 + 10
 			count := 0
 
 			//Sort by release date
