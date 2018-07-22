@@ -21,7 +21,7 @@ func (discogsBridge testBridgeFail) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridgeFail) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
+func (discogsBridge testBridgeFail) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
 	return nil, errors.New("Built to fail")
 }
 func (discogsBridge testBridgeFail) getReleases(folders []int32) ([]*pbrc.Record, error) {
@@ -40,7 +40,7 @@ func (discogsBridge testBridgePartialFail) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridgePartialFail) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
+func (discogsBridge testBridgePartialFail) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
 	return nil, errors.New("Built to fail")
 }
 func (discogsBridge testBridgePartialFail) getReleases(folders []int32) ([]*pbrc.Record, error) {
@@ -80,8 +80,8 @@ func (discogsBridge testBridgeCleverFail) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridgeCleverFail) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
-	metadata := &pbs.ReleaseMetadata{}
+func (discogsBridge testBridgeCleverFail) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
+	metadata := &pbrc.ReleaseMetadata{}
 	switch rel.Id {
 	case 1:
 		metadata.DateAdded = time.Now().Unix()
@@ -142,8 +142,8 @@ func (discogsBridge testBridge) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridge) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
-	metadata := &pbs.ReleaseMetadata{}
+func (discogsBridge testBridge) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
+	metadata := &pbrc.ReleaseMetadata{GoalFolder: 25}
 	switch rel.Id {
 	case 1:
 		metadata.DateAdded = time.Now().Unix()
@@ -155,8 +155,8 @@ func (discogsBridge testBridge) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetad
 	return metadata, nil
 }
 
-func (discogsBridge testBridgeMove) getMetadata(rel *pbd.Release) (*pbs.ReleaseMetadata, error) {
-	metadata := &pbs.ReleaseMetadata{}
+func (discogsBridge testBridgeMove) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
+	metadata := &pbrc.ReleaseMetadata{GoalFolder: 25}
 	switch rel.Id {
 	case 1:
 		metadata.DateAdded = time.Now().Unix()
@@ -169,6 +169,27 @@ func (discogsBridge testBridgeMove) getMetadata(rel *pbd.Release) (*pbs.ReleaseM
 }
 
 func (discogsBridge testBridge) getReleases(folders []int32) ([]*pbrc.Record, error) {
+	if len(folders) == 1 && folders[0] == 812802 {
+		return []*pbrc.Record{
+			&pbrc.Record{
+				Release: &pbd.Release{
+					Id:             1,
+					Labels:         []*pbd.Label{&pbd.Label{Name: "FirstLabel"}},
+					Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
+					FormatQuantity: 2,
+				},
+				Metadata: &pbrc.ReleaseMetadata{GoalFolder: 25}},
+			&pbrc.Record{
+				Release: &pbd.Release{
+					Id:             1,
+					Labels:         []*pbd.Label{&pbd.Label{Name: "FirstLabel"}},
+					Formats:        []*pbd.Format{&pbd.Format{Descriptions: []string{"12"}}},
+					FormatQuantity: 2,
+				},
+				Metadata: &pbrc.ReleaseMetadata{GoalFolder: 25}},
+		}, nil
+	}
+
 	var result []*pbrc.Record
 
 	result = append(result, &pbrc.Record{Release: &pbd.Release{

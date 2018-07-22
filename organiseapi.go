@@ -2,13 +2,18 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/brotherlogic/goserver/utils"
 	"github.com/golang/protobuf/proto"
 
+	pbgd "github.com/brotherlogic/godiscogs"
+	pbrc "github.com/brotherlogic/recordcollection/proto"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 	pbt "github.com/brotherlogic/tracer/proto"
 )
@@ -83,12 +88,35 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaResponse, error) {
 	s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_START_FUNCTION)
 	t := time.Now()
+
+	//Compute the count of valid records in the listening pile
+	count := 0
+	for _, loc := range s.org.GetLocations() {
+		log.Printf("Trying %v", loc.Name)
+		if loc.Name == "Listening Pile" {
+			s.organiseLocation(loc)
+			log.Printf("Found %v", loc.ReleasesLocation)
+			for _, place := range loc.ReleasesLocation {
+				meta, err := s.bridge.getMetadata(&pbgd.Release{Id: place.InstanceId})
+				log.Printf("META: %v", meta)
+				if err == nil {
+					if meta.GoalFolder == req.GetFolderId() {
+						if meta.Category != pbrc.ReleaseMetadata_UNLISTENED && meta.Category != pbrc.ReleaseMetadata_STAGED {
+							count++
+						}
+					}
+				}
+			}
+		}
+	}
+	log.Printf("COUNT = %v", count)
+
 	for _, loc := range s.org.GetLocations() {
 		for _, id := range loc.GetFolderIds() {
 			if id == req.GetFolderId() {
 				s.organiseLocation(loc)
 
-				if loc.GetQuota().GetNumOfSlots() > 0 && len(loc.GetReleasesLocation()) >= int(loc.GetQuota().GetNumOfSlots()) {
+				if loc.GetQuota().GetNumOfSlots() > 0 && len(loc.GetReleasesLocation())+count >= int(loc.GetQuota().GetNumOfSlots()) {
 					s.LogFunction("GetQuota-true", t)
 					if !loc.GetNoAlert() {
 						s.gh.alert(loc)
@@ -106,7 +134,7 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 
 	s.LogFunction("GetQuota-notfound", t)
 	s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
-	return &pb.QuotaResponse{}, fmt.Errorf("Unable to locate folder in request (%v)", req.GetFolderId())
+	return &pb.QuotaResponse{}, status.Error(codes.InvalidArgument, fmt.Sprintf("Unable to locate folder in request (%v)", req.GetFolderId()))
 }
 
 // AddExtractor adds an extractor

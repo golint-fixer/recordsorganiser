@@ -92,7 +92,7 @@ func getReleaseString(instanceID int32) string {
 	defer cancel()
 	rel, err := client.GetRecords(ctx, &pbrc.GetRecordsRequest{Force: true, Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: instanceID}}})
 	if err != nil {
-		log.Fatalf("unable to get record: %v", err)
+		log.Fatalf("unable to get record (%v): %v", instanceID, err)
 	}
 	return rel.GetRecords()[0].GetRelease().Title + " [" + strconv.Itoa(int(instanceID)) + "]"
 }

@@ -60,6 +60,13 @@ func doExtractorSplit(label *pb.Label, ex map[int32]string, logger func(string))
 
 // Sorts by label and then catalogue number
 func sortByLabelCat(rel1, rel2 *pb.Release, extractors map[int32]string, logger func(string)) int {
+	if len(rel1.Labels) == 0 {
+		return -1
+	}
+	if len(rel2.Labels) == 0 {
+		return 1
+	}
+
 	label1 := pb.GetMainLabel(rel1.Labels)
 	label2 := pb.GetMainLabel(rel2.Labels)
 
