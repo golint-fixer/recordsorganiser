@@ -109,7 +109,7 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 			}
 		}
 	}
-	log.Printf("COUNT = %v", count)
+	s.Log(fmt.Sprintf("COUNT = %v", count))
 
 	for _, loc := range s.org.GetLocations() {
 		for _, id := range loc.GetFolderIds() {
