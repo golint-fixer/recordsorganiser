@@ -97,7 +97,7 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 			s.organiseLocation(loc)
 			log.Printf("Found %v", loc.ReleasesLocation)
 			for _, place := range loc.ReleasesLocation {
-				meta, err := s.bridge.getMetadata(&pbgd.Release{Id: place.InstanceId})
+				meta, err := s.bridge.getMetadata(&pbgd.Release{InstanceId: place.InstanceId})
 				log.Printf("META: %v", meta)
 				if err == nil {
 					if meta.GoalFolder == req.GetFolderId() {
