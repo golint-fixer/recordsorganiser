@@ -270,6 +270,7 @@ func main() {
 			records := make([]*pbrc.Record, 0)
 			minScore := int32(6)
 			foundOthers := false
+			log.Printf("FOUND %v but %v", len(loc.InstanceId), loc.OverQuota)
 			for _, i := range loc.InstanceId {
 				recs, err := rclient.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: i}, Metadata: &pbrc.ReleaseMetadata{}}})
 				if err != nil {
@@ -283,6 +284,8 @@ func main() {
 					}
 				}
 			}
+
+			fmt.Printf("Checking on %v records\n", len(records))
 
 			if *limit > 0 && int(minScore) < *limit {
 				minScore = int32(*limit)
