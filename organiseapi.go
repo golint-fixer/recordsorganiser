@@ -91,24 +91,37 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 
 	instanceIds := []int32{}
 
+	folderIds := []int32{}
+	for _, loc := range s.org.GetLocations() {
+		if loc.Name == req.Name {
+			folderIds = append(folderIds, loc.FolderIds...)
+		}
+	}
+
+	if len(folderIds) == 0 {
+		folderIds = append(folderIds, req.FolderId)
+	}
+
 	//Compute the count of valid records in the listening pile
 	count := 0
 	for _, loc := range s.org.GetLocations() {
 		log.Printf("Trying %v", loc.Name)
 		if loc.Name == "Listening Pile" {
-			log.Printf("Found %v", loc.ReleasesLocation)
+			s.Log(fmt.Sprintf("Found %v", len(loc.ReleasesLocation)))
 			for _, place := range loc.ReleasesLocation {
 				meta, err := s.bridge.getMetadata(&pbgd.Release{InstanceId: place.InstanceId})
 				log.Printf("META: %v", meta)
 				if err == nil {
-					if meta.GoalFolder == req.GetFolderId() {
-						if meta.Category != pbrc.ReleaseMetadata_UNLISTENED && meta.Category != pbrc.ReleaseMetadata_STAGED {
-							if req.IncludeRecords {
-								instanceIds = append(instanceIds, place.InstanceId)
+					for _, fid := range folderIds {
+						if meta.GoalFolder == fid {
+							if meta.Category != pbrc.ReleaseMetadata_UNLISTENED && meta.Category != pbrc.ReleaseMetadata_STAGED {
+								if req.IncludeRecords {
+									instanceIds = append(instanceIds, place.InstanceId)
+								}
+								count++
+							} else {
+								s.Log(fmt.Sprintf("Skipping %v", meta))
 							}
-							count++
-						} else {
-							s.Log(fmt.Sprintf("Skipping %v", meta))
 						}
 					}
 				}
