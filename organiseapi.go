@@ -107,6 +107,8 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 								instanceIds = append(instanceIds, place.InstanceId)
 							}
 							count++
+						} else {
+							s.Log(fmt.Sprintf("Skipping %v", meta))
 						}
 					}
 				}
