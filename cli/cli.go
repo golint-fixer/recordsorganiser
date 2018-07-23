@@ -157,7 +157,7 @@ func main() {
 	}
 
 	client := pb.NewOrganiserServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
 	defer cancel()
 
 	switch os.Args[1] {
@@ -264,7 +264,7 @@ func main() {
 
 			loc, err := client.GetQuota(ctx, &pb.QuotaRequest{IncludeRecords: true, Name: *name})
 			if err != nil {
-				log.Fatalf("ERRR: %v", err)
+				log.Fatalf("Error in get quota: %v", err)
 			}
 
 			records := make([]*pbrc.Record, 0)
