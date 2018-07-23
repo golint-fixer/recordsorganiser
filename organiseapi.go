@@ -117,8 +117,8 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 	s.Log(fmt.Sprintf("COUNT = %v", count))
 	for _, loc := range s.org.GetLocations() {
 		for _, id := range loc.GetFolderIds() {
-			s.Log(fmt.Sprintf("FOUND = %v,%v", req.Name, loc.Name))
 			if id == req.GetFolderId() || (req.Name == loc.Name) {
+				s.Log(fmt.Sprintf("FOUND = %v,%v", len(loc.GetReleasesLocation()), loc.GetQuota().GetNumOfSlots()))
 				if loc.GetQuota().GetNumOfSlots() > 0 && len(loc.GetReleasesLocation())+count >= int(loc.GetQuota().GetNumOfSlots()) {
 					s.LogFunction("GetQuota-true", t)
 					if !loc.GetNoAlert() {
