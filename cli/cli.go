@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"sort"
 	"strconv"
@@ -90,7 +91,7 @@ func getReleaseString(instanceID int32) string {
 	client := pbrc.NewRecordCollectionServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	rel, err := client.GetRecords(ctx, &pbrc.GetRecordsRequest{Force: true, Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: instanceID}}})
+	rel, err := client.GetRecords(ctx, &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: instanceID}}})
 	if err != nil {
 		log.Fatalf("unable to get record (%v): %v", instanceID, err)
 	}
@@ -269,39 +270,31 @@ func main() {
 
 			records := make([]*pbrc.Record, 0)
 			minScore := int32(6)
-			foundOthers := false
 			log.Printf("FOUND %v but %v", len(loc.InstanceId), loc.OverQuota)
 			for _, i := range loc.InstanceId {
-				recs, err := rclient.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: i}, Metadata: &pbrc.ReleaseMetadata{}}})
+				t1 := time.Now()
+				recs, err := rclient.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Force: true, Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: i}}})
 				if err != nil {
 					log.Fatalf("Error : %v", err)
 				}
 
 				for _, r := range recs.GetRecords() {
 					records = append(records, r)
-					if r.GetRelease().Rating < minScore {
-						minScore = r.GetRelease().Rating
+					score := r.GetRelease().Rating
+					if score == 0 {
+						score = int32(math.Round(float64(r.GetMetadata().OverallScore)))
+					}
+					if score < minScore {
+						minScore = score
 					}
 				}
 			}
-
-			fmt.Printf("Checking on %v records\n", len(records))
 
 			if *limit > 0 && int(minScore) < *limit {
 				minScore = int32(*limit)
 			}
 
-			for _, r := range records {
-				if r.GetMetadata().Others {
-					foundOthers = true
-					break
-				}
-
-			}
-
-			if foundOthers {
-				fmt.Printf("These have others - auto sell\n")
-			}
+			fmt.Printf("Checking on %v records with the min score being %v\n", len(records), minScore)
 
 			total := len(records) - 500 + 10
 			count := 0
@@ -312,7 +305,7 @@ func main() {
 				if count > total {
 					break
 				}
-				if r.GetRelease().Rating == minScore && (!foundOthers || r.GetMetadata().Others) {
+				if r.GetRelease().Rating == minScore {
 					count++
 					fmt.Printf("SELL: [%v] %v\n", r.GetRelease().InstanceId, r.GetRelease().Title)
 					if *assess {
