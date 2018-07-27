@@ -60,6 +60,7 @@ func (s *Server) AddLocation(ctx context.Context, req *pb.AddLocationRequest) (*
 
 // GetOrganisation gets a given organisation
 func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationRequest) (*pb.GetOrganisationResponse, error) {
+	ctx = s.LogTrace(ctx, "GetOrganisation", time.Now(), pbt.Milestone_START_FUNCTION)
 	locations := make([]*pb.Location, 0)
 	num := int32(0)
 
@@ -81,6 +82,8 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 	if req.GetForceReorg() {
 		s.saveOrg()
 	}
+
+	s.LogTrace(ctx, "GetOrganisation", time.Now(), pbt.Milestone_END_FUNCTION)
 	return &pb.GetOrganisationResponse{Locations: locations, NumberProcessed: num}, nil
 }
 
