@@ -139,12 +139,15 @@ func (s *Server) Mote(master bool) error {
 
 // GetState gets the state of the server
 func (s Server) GetState() []*pbgs.State {
-	return []*pbgs.State{}
+	return []*pbgs.State{
+		&pbgs.State{Key: "OrgTime", Text: fmt.Sprintf("%v", s.lastOrgTime)},
+		&pbgs.State{Key: "OrgFold", Text: s.lastOrgFolder},
+	}
 }
 
 // InitServer builds an initial server
 func InitServer() *Server {
-	server := &Server{&goserver.GoServer{}, prodBridge{}, &pb.Organisation{}, &prodGh{}}
+	server := &Server{&goserver.GoServer{}, prodBridge{}, &pb.Organisation{}, &prodGh{}, time.Second, ""}
 	server.PrepServer()
 	server.bridge = &prodBridge{Resolver: server.GetIP}
 	server.GoServer.KSclient = *keystoreclient.GetClient(server.GetIP)

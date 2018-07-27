@@ -2,6 +2,7 @@ package main
 
 import (
 	"sort"
+	"time"
 
 	pbs "github.com/brotherlogic/discogssyncer/server"
 	"github.com/brotherlogic/goserver"
@@ -14,9 +15,11 @@ import (
 // Server the configuration for the syncer
 type Server struct {
 	*goserver.GoServer
-	bridge discogsBridge
-	org    *pb.Organisation
-	gh     gh
+	bridge        discogsBridge
+	org           *pb.Organisation
+	gh            gh
+	lastOrgTime   time.Duration
+	lastOrgFolder string
 }
 
 type gh interface {
@@ -55,6 +58,8 @@ func convert(exs []*pb.LabelExtractor) map[int32]string {
 }
 
 func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
+	t := time.Now()
+	s.lastOrgFolder = c.Name
 	fr, err := s.bridge.getReleases(c.GetFolderIds())
 	if err != nil {
 		return -1, err
@@ -75,5 +80,6 @@ func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
 		}
 	}
 
+	s.lastOrgTime = time.Now().Sub(t)
 	return int32(len(fr)), nil
 }
