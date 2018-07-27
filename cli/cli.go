@@ -272,8 +272,10 @@ func main() {
 			minScore := int32(6)
 			log.Printf("FOUND %v but %v", len(loc.InstanceId), loc.OverQuota)
 			for _, i := range loc.InstanceId {
-				t1 := time.Now()
-				recs, err := rclient.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Force: true, Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: i}}})
+				ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+				defer cancel()
+
+				recs, err := rclient.GetRecords(ctx, &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: i}}})
 				if err != nil {
 					log.Fatalf("Error : %v", err)
 				}
@@ -284,7 +286,7 @@ func main() {
 					if score == 0 {
 						score = int32(math.Round(float64(r.GetMetadata().OverallScore)))
 					}
-					if score < minScore {
+					if score > 0 && score < minScore {
 						minScore = score
 					}
 				}
@@ -305,7 +307,11 @@ func main() {
 				if count > total {
 					break
 				}
-				if r.GetRelease().Rating == minScore {
+				score := r.GetRelease().Rating
+				if score == 0 {
+					score = int32(math.Round(float64(r.GetMetadata().OverallScore)))
+				}
+				if score == minScore {
 					count++
 					fmt.Printf("SELL: [%v] %v\n", r.GetRelease().InstanceId, r.GetRelease().Title)
 					if *assess {

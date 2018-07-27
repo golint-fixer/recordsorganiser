@@ -37,11 +37,13 @@ func (s *Server) prepareForReorg() {
 func (s *Server) organise(c *pb.Organisation) (int32, error) {
 	num := int32(0)
 	for _, l := range s.org.Locations {
-		n, err := s.organiseLocation(l)
-		if err != nil {
-			return -1, err
+		if l.Name == c.Name {
+			n, err := s.organiseLocation(l)
+			if err != nil {
+				return -1, err
+			}
+			num += n
 		}
-		num += n
 	}
 	return num, nil
 }
