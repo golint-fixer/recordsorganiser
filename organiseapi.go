@@ -110,10 +110,8 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 	for _, loc := range s.org.GetLocations() {
 		log.Printf("Trying %v", loc.Name)
 		if loc.Name == "Listening Pile" {
-			s.Log(fmt.Sprintf("Found %v", len(loc.ReleasesLocation)))
 			for _, place := range loc.ReleasesLocation {
 				meta, err := s.bridge.getMetadata(&pbgd.Release{InstanceId: place.InstanceId})
-				log.Printf("META: %v", meta)
 				if err == nil {
 					for _, fid := range folderIds {
 						if meta.GoalFolder == fid {
@@ -133,11 +131,9 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 		}
 	}
 
-	s.Log(fmt.Sprintf("COUNT = %v", count))
 	for _, loc := range s.org.GetLocations() {
 		for _, id := range loc.GetFolderIds() {
 			if id == req.GetFolderId() || (req.Name == loc.Name) {
-				s.Log(fmt.Sprintf("FOUND = %v,%v", len(loc.GetReleasesLocation()), loc.GetQuota().GetNumOfSlots()))
 				if loc.GetQuota().GetNumOfSlots() > 0 && len(loc.GetReleasesLocation())+count >= int(loc.GetQuota().GetNumOfSlots()) {
 					s.LogFunction("GetQuota-true", t)
 					if !loc.GetNoAlert() {
