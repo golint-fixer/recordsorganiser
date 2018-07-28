@@ -68,12 +68,14 @@ func (s *Server) organiseLocation(ctx context.Context, c *pb.Location) (int32, e
 		return -1, err
 	}
 
+	ctx = s.LogTrace(ctx, "startSort", time.Now(), pbt.Milestone_START)
 	switch c.GetSort() {
 	case pb.Location_BY_DATE_ADDED:
 		sort.Sort(ByDateAdded(fr))
 	case pb.Location_BY_LABEL_CATNO:
 		sort.Sort(ByLabelCat{fr, convert(s.org.GetExtractors()), s.Log})
 	}
+	ctx = s.LogTrace(ctx, "endSort", time.Now(), pbt.Milestone_END)
 
 	records := Split(fr, float64(c.GetSlots()))
 	c.ReleasesLocation = []*pb.ReleasePlacement{}
