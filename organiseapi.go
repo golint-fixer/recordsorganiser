@@ -119,7 +119,7 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 						if meta.GoalFolder == fid {
 							if meta.Category != pbrc.ReleaseMetadata_UNLISTENED && meta.Category != pbrc.ReleaseMetadata_STAGED && meta.Category != pbrc.ReleaseMetadata_STAGED_TO_SELL && meta.Category != pbrc.ReleaseMetadata_SOLD && meta.Category != pbrc.ReleaseMetadata_PREPARE_TO_SELL {
 								if place.InstanceId == 281701792 {
-									s.Log(fmt.Sprintf("Wha: %v, %v", place.InsanceId, meta.Category))
+									s.Log(fmt.Sprintf("Wha: %v, %v", place.InstanceId, meta.Category))
 								}
 								if req.IncludeRecords {
 									instanceIds = append(instanceIds, place.InstanceId)
