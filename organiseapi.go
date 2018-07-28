@@ -68,7 +68,7 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 		for _, loc := range s.org.GetLocations() {
 			if utils.FuzzyMatch(rloc, loc) {
 				if req.ForceReorg {
-					n, err := s.organiseLocation(loc)
+					n, err := s.organiseLocation(ctx, loc)
 					num = n
 					if err != nil {
 						return &pb.GetOrganisationResponse{}, err

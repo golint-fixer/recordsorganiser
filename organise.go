@@ -4,12 +4,14 @@ import (
 	"sort"
 	"time"
 
-	pbs "github.com/brotherlogic/discogssyncer/server"
 	"github.com/brotherlogic/goserver"
+	"golang.org/x/net/context"
 
+	pbs "github.com/brotherlogic/discogssyncer/server"
 	pbd "github.com/brotherlogic/godiscogs"
 	pbrc "github.com/brotherlogic/recordcollection/proto"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
+	pbt "github.com/brotherlogic/tracer/proto"
 )
 
 // Server the configuration for the syncer
@@ -40,7 +42,7 @@ func (s *Server) prepareForReorg() {
 func (s *Server) organise(c *pb.Organisation) (int32, error) {
 	num := int32(0)
 	for _, l := range s.org.Locations {
-		n, err := s.organiseLocation(l)
+		n, err := s.organiseLocation(context.Background(), l)
 		if err != nil {
 			return -1, err
 		}
@@ -57,8 +59,9 @@ func convert(exs []*pb.LabelExtractor) map[int32]string {
 	return m
 }
 
-func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
+func (s *Server) organiseLocation(ctx context.Context, c *pb.Location) (int32, error) {
 	t := time.Now()
+	ctx = s.LogTrace(ctx, "organiseLocation", time.Now(), pbt.Milestone_START_FUNCTION)
 	s.lastOrgFolder = c.Name
 	fr, err := s.bridge.getReleases(c.GetFolderIds())
 	if err != nil {
@@ -81,5 +84,6 @@ func (s *Server) organiseLocation(c *pb.Location) (int32, error) {
 	}
 
 	s.lastOrgTime = time.Now().Sub(t)
+	s.LogTrace(ctx, "organiseLocation", time.Now(), pbt.Milestone_END_FUNCTION)
 	return int32(len(fr)), nil
 }

@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 
 	pbgd "github.com/brotherlogic/godiscogs"
+	pbgs "github.com/brotherlogic/goserver/proto"
 	pbrc "github.com/brotherlogic/recordcollection/proto"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 
@@ -158,7 +159,7 @@ func main() {
 	}
 
 	client := pb.NewOrganiserServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+	ctx, cancel := utils.BuildContext("OrgCLI", pbgs.ContextType_MEDIUM)
 	defer cancel()
 
 	switch os.Args[1] {
