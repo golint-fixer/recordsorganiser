@@ -10,6 +10,7 @@ import (
 
 	"github.com/brotherlogic/goserver"
 	"github.com/brotherlogic/keystore/client"
+	pbt "github.com/brotherlogic/tracer/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
@@ -97,7 +98,8 @@ func (discogsBridge prodBridge) moveToFolder(move *pbs.ReleaseMove) {
 	client.MoveToFolder(context.Background(), move)
 }
 
-func (discogsBridge prodBridge) getReleases(folders []int32) ([]*pbrc.Record, error) {
+func (discogsBridge prodBridge) getReleases(ctx context.Context, folders []int32) ([]*pbrc.Record, error) {
+	ctx = utils.Trace(ctx, "getReleases", time.Now(), pbt.Milestone_START_FUNCTION, "recordsorganiser")
 	var result []*pbrc.Record
 
 	for _, id := range folders {
@@ -119,6 +121,7 @@ func (discogsBridge prodBridge) getReleases(folders []int32) ([]*pbrc.Record, er
 		}
 	}
 
+	utils.Trace(ctx, "getReleases", time.Now(), pbt.Milestone_END_FUNCTION, "recordsorganiser")
 	return result, nil
 }
 

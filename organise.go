@@ -29,7 +29,7 @@ type gh interface {
 }
 
 type discogsBridge interface {
-	getReleases(folders []int32) ([]*pbrc.Record, error)
+	getReleases(ctx context.Context, folders []int32) ([]*pbrc.Record, error)
 	getMetadata(release *pbd.Release) (*pbrc.ReleaseMetadata, error)
 	moveToFolder(releaseMove *pbs.ReleaseMove)
 	GetIP(string) (string, int)
@@ -63,7 +63,7 @@ func (s *Server) organiseLocation(ctx context.Context, c *pb.Location) (int32, e
 	t := time.Now()
 	ctx = s.LogTrace(ctx, "organiseLocation", time.Now(), pbt.Milestone_START_FUNCTION)
 	s.lastOrgFolder = c.Name
-	fr, err := s.bridge.getReleases(c.GetFolderIds())
+	fr, err := s.bridge.getReleases(ctx, c.GetFolderIds())
 	if err != nil {
 		return -1, err
 	}
