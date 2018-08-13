@@ -116,7 +116,10 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 					for _, fid := range folderIds {
 						if meta.GoalFolder == fid {
 							if meta.Category != pbrc.ReleaseMetadata_UNLISTENED && meta.Category != pbrc.ReleaseMetadata_STAGED && meta.Category != pbrc.ReleaseMetadata_STAGED_TO_SELL && meta.Category != pbrc.ReleaseMetadata_SOLD && meta.Category != pbrc.ReleaseMetadata_PREPARE_TO_SELL && meta.Category != pbrc.ReleaseMetadata_PRE_FRESHMAN {
-								s.Log(fmt.Sprintf("Adding %v", meta))
+								if meta.Category != pbrc.ReleaseMetadata_PRE_POSTDOC &&
+									meta.Category != pbrc.ReleaseMetadata_PRE_SOPHMORE {
+									s.Log(fmt.Sprintf("Adding %v", meta))
+								}
 								if req.IncludeRecords {
 									instanceIds = append(instanceIds, place.InstanceId)
 								}
