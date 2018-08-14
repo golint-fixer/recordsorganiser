@@ -149,7 +149,7 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 					s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
 					if req.IncludeRecords {
 						for _, in := range loc.ReleasesLocation {
-							meta, err := s.bridge.getMetadata(&pbgd.Release{InstanceId: place.InstanceId})
+							meta, err := s.bridge.getMetadata(&pbgd.Release{InstanceId: in.InstanceId})
 							if err == nil {
 								if meta.Category != pbrc.ReleaseMetadata_STAGED_TO_SELL {
 									instanceIds = append(instanceIds, in.InstanceId)
