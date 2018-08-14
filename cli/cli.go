@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math"
 	"os"
 	"sort"
 	"strconv"
@@ -159,7 +158,7 @@ func main() {
 	}
 
 	client := pb.NewOrganiserServiceClient(conn)
-	ctx, cancel := utils.BuildContext("OrgCLI", pbgs.ContextType_MEDIUM)
+	ctx, cancel := utils.BuildContext("OrgCLI", "OrgCLI", pbgs.ContextType_MEDIUM)
 	defer cancel()
 
 	switch os.Args[1] {
@@ -208,7 +207,7 @@ func main() {
 				log.Fatalf("Unable to get org: %v", err)
 			}
 
-			quot, err := client.GetQuota(ctx, &pb.QuotaRequest{FolderId: loc.GetLocations()[0].FolderIds[0], IncludeRecords: true})
+			quot, err := client.GetQuota(ctx, &pb.QuotaRequest{FolderId: loc.GetLocations()[0].FolderIds[0], IncludeRecords: false})
 			if quot.GetOverQuota() {
 				fmt.Printf("%v is over quota by %v\n", *name, len(quot.InstanceId))
 				for _, id := range quot.InstanceId {
@@ -278,7 +277,7 @@ func main() {
 					records = append(records, r)
 					score := r.GetRelease().Rating
 					if score == 0 {
-						score = int32(math.Round(float64(r.GetMetadata().OverallScore)))
+						score = int32(float64(r.GetMetadata().OverallScore))
 					}
 					if score > 0 && score < minScore {
 						minScore = score
@@ -303,7 +302,7 @@ func main() {
 				}
 				score := r.GetRelease().Rating
 				if score == 0 {
-					score = int32(math.Round(float64(r.GetMetadata().OverallScore)))
+					score = int32(float64(r.GetMetadata().OverallScore))
 				}
 				if score == minScore {
 					count++

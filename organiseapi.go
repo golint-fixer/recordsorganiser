@@ -136,9 +136,6 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 			if id == req.GetFolderId() || (req.Name == loc.Name) {
 				if loc.GetQuota().GetNumOfSlots() > 0 && len(loc.GetReleasesLocation())+count >= int(loc.GetQuota().GetNumOfSlots()) {
 					s.LogFunction("GetQuota-true", t)
-					if !loc.GetNoAlert() {
-						s.gh.alert(loc)
-					}
 					s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
 					for _, in := range loc.ReleasesLocation {
 						meta, err := s.bridge.getMetadata(&pbgd.Release{InstanceId: in.InstanceId})
@@ -147,6 +144,12 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 								meta.Category != pbrc.ReleaseMetadata_SOLD {
 								instanceIds = append(instanceIds, in.InstanceId)
 							}
+						}
+					}
+
+					if len(instanceIds) > int(loc.GetQuota().GetNumOfSlots()) {
+						if !loc.GetNoAlert() {
+							s.gh.alert(loc)
 						}
 					}
 
