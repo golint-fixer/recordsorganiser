@@ -205,43 +205,36 @@ func main() {
 			loc, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{Locations: []*pb.Location{&pb.Location{Name: *name}}})
 
 			if err != nil {
-				log.Fatalf("Error: %v", err)
+				log.Fatalf("Unable to get org: %v", err)
 			}
 
-			fmt.Printf("%v / %v is taken for %v\n", len(loc.GetLocations()[0].ReleasesLocation), loc.GetLocations()[0].Quota.GetNumOfSlots(), *name)
-
-			host, port, err := utils.Resolve("recordcollection")
-			if err != nil {
-				log.Fatalf("Unable to reach collection: %v", err)
-			}
-			conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
-			defer conn.Close()
-
-			if err != nil {
-				log.Fatalf("Unable to dial: %v", err)
-			}
-
-			rclient := pbrc.NewRecordCollectionServiceClient(conn)
-
-			count := 0
-			for _, l := range loc.GetLocations() {
-				for _, id := range l.GetFolderIds() {
-					recs, err := rclient.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{}, Metadata: &pbrc.ReleaseMetadata{GoalFolder: id}}})
+			quot, err := client.GetQuota(ctx, &pb.QuotaRequest{FolderId: loc.GetLocations()[0].FolderIds[0], IncludeRecords: true})
+			if quot.GetOverQuota() {
+				fmt.Printf("%v is over quota by %v\n", *name, len(quot.InstanceId))
+				for _, id := range quot.InstanceId {
+					host, port, err := utils.Resolve("recordcollection")
 					if err != nil {
-						log.Fatalf("Error: %v", err)
+						log.Fatalf("Unable to reach collection: %v", err)
 					}
-					for _, r := range recs.GetRecords() {
-						if r.GetMetadata().Category != pbrc.ReleaseMetadata_STAGED && r.GetMetadata().Category != pbrc.ReleaseMetadata_STAGED_TO_SELL && r.GetMetadata().Category != pbrc.ReleaseMetadata_SOLD {
-							count++
-						}
+					conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+					defer conn.Close()
+
+					if err != nil {
+						log.Fatalf("Unable to dial: %v", err)
 					}
+
+					client := pbrc.NewRecordCollectionServiceClient(conn)
+					recs, err := client.GetRecords(ctx, &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: id}}})
+					if err != nil {
+						log.Fatalf("Unable to get record %v -> %v", id, err)
+					}
+
+					if len(recs.GetRecords()) == 0 {
+						log.Fatalf("No records found", id)
+					}
+					fmt.Printf("%v\n", recs.GetRecords()[0].GetMetadata().Category)
 				}
 			}
-			fmt.Printf("COUNT = %v\n", count)
-			fmt.Printf("We have to sell %v records to meet this\n", count-int(loc.GetLocations()[0].Quota.GetNumOfSlots())+10)
-
-			quot, err := client.GetQuota(ctx, &pb.QuotaRequest{FolderId: 242017})
-			fmt.Printf("%v and %v\n", quot, err)
 		}
 	case "sell":
 		sellFlags := flag.NewFlagSet("sell", flag.ExitOnError)
