@@ -151,7 +151,8 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 						for _, in := range loc.ReleasesLocation {
 							meta, err := s.bridge.getMetadata(&pbgd.Release{InstanceId: in.InstanceId})
 							if err == nil {
-								if meta.Category != pbrc.ReleaseMetadata_STAGED_TO_SELL {
+								if meta.Category != pbrc.ReleaseMetadata_STAGED_TO_SELL &&
+									meta.Category != pbrc.ReleaseMetadata_SOLD {
 									instanceIds = append(instanceIds, in.InstanceId)
 								}
 							}
