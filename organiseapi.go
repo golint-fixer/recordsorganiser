@@ -121,14 +121,7 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 								meta.Category != pbrc.ReleaseMetadata_SOLD &&
 								meta.Category != pbrc.ReleaseMetadata_PREPARE_TO_SELL &&
 								meta.Category != pbrc.ReleaseMetadata_PRE_FRESHMAN {
-								if meta.Category != pbrc.ReleaseMetadata_PRE_POSTDOC &&
-									meta.Category != pbrc.ReleaseMetadata_PRE_SOPHMORE &&
-									meta.Category != pbrc.ReleaseMetadata_PRE_GRADUATE {
-									s.Log(fmt.Sprintf("Adding %v", meta))
-								}
-								if req.IncludeRecords {
-									instanceIds = append(instanceIds, place.InstanceId)
-								}
+								instanceIds = append(instanceIds, place.InstanceId)
 								count++
 							}
 						}
@@ -147,19 +140,17 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 						s.gh.alert(loc)
 					}
 					s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
-					if req.IncludeRecords {
-						for _, in := range loc.ReleasesLocation {
-							meta, err := s.bridge.getMetadata(&pbgd.Release{InstanceId: in.InstanceId})
-							if err == nil {
-								if meta.Category != pbrc.ReleaseMetadata_STAGED_TO_SELL &&
-									meta.Category != pbrc.ReleaseMetadata_SOLD {
-									instanceIds = append(instanceIds, in.InstanceId)
-								}
+					for _, in := range loc.ReleasesLocation {
+						meta, err := s.bridge.getMetadata(&pbgd.Release{InstanceId: in.InstanceId})
+						if err == nil {
+							if meta.Category != pbrc.ReleaseMetadata_STAGED_TO_SELL &&
+								meta.Category != pbrc.ReleaseMetadata_SOLD {
+								instanceIds = append(instanceIds, in.InstanceId)
 							}
 						}
 					}
 
-					return &pb.QuotaResponse{SpillFolder: loc.SpillFolder, OverQuota: true, LocationName: loc.GetName(), InstanceId: instanceIds}, nil
+					return &pb.QuotaResponse{SpillFolder: loc.SpillFolder, OverQuota: len(instanceIds) > int(loc.GetQuota().GetNumOfSlots()), LocationName: loc.GetName(), InstanceId: instanceIds}, nil
 				}
 
 				s.LogFunction("GetQuota-false", t)
