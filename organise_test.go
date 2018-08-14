@@ -24,7 +24,7 @@ func (discogsBridge testBridgeFail) GetIP(name string) (string, int) {
 func (discogsBridge testBridgeFail) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
 	return nil, errors.New("Built to fail")
 }
-func (discogsBridge testBridgeFail) getReleases(folders []int32) ([]*pbrc.Record, error) {
+func (discogsBridge testBridgeFail) getReleases(ctx context.Context, folders []int32) ([]*pbrc.Record, error) {
 	return nil, errors.New("Built to fail")
 }
 func (discogsBridge testBridgeFail) getRelease(ID int32) (*pbd.Release, error) {
@@ -43,7 +43,7 @@ func (discogsBridge testBridgePartialFail) GetIP(name string) (string, int) {
 func (discogsBridge testBridgePartialFail) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
 	return nil, errors.New("Built to fail")
 }
-func (discogsBridge testBridgePartialFail) getReleases(folders []int32) ([]*pbrc.Record, error) {
+func (discogsBridge testBridgePartialFail) getReleases(ctx context.Context, olders []int32) ([]*pbrc.Record, error) {
 	var result []*pbrc.Record
 
 	result = append(result, &pbrc.Record{Release: &pbd.Release{
@@ -67,7 +67,7 @@ func (discogsBridge testBridgePartialFail) getReleases(folders []int32) ([]*pbrc
 
 	return result, nil
 }
-func (discogsBridge testBridgePartialFail) getRelease(ID int32) (*pbd.Release, error) {
+func (discogsBridge testBridgePartialFail) getRelease(ctx context.Context, ID int32) (*pbd.Release, error) {
 	return nil, errors.New("Built to fail")
 }
 func (discogsBridge testBridgePartialFail) moveToFolder(move *pbs.ReleaseMove) {
@@ -92,7 +92,7 @@ func (discogsBridge testBridgeCleverFail) getMetadata(rel *pbd.Release) (*pbrc.R
 	}
 	return metadata, nil
 }
-func (discogsBridge testBridgeCleverFail) getReleases(folders []int32) ([]*pbrc.Record, error) {
+func (discogsBridge testBridgeCleverFail) getReleases(ctx context.Context, folders []int32) ([]*pbrc.Record, error) {
 	for _, fold := range folders {
 		if fold != 673768 {
 			return nil, errors.New("Built to fail")
@@ -168,7 +168,7 @@ func (discogsBridge testBridgeMove) getMetadata(rel *pbd.Release) (*pbrc.Release
 	return metadata, nil
 }
 
-func (discogsBridge testBridge) getReleases(folders []int32) ([]*pbrc.Record, error) {
+func (discogsBridge testBridge) getReleases(ctx context.Context, folders []int32) ([]*pbrc.Record, error) {
 	if len(folders) == 1 && folders[0] == 812802 {
 		return []*pbrc.Record{
 			&pbrc.Record{
@@ -214,7 +214,7 @@ func (discogsBridge testBridge) getReleases(folders []int32) ([]*pbrc.Record, er
 	return result, nil
 }
 
-func (discogsBridge testBridgeMove) getReleases(folders []int32) ([]*pbrc.Record, error) {
+func (discogsBridge testBridgeMove) getReleases(ctx context.Context, folders []int32) ([]*pbrc.Record, error) {
 	var result []*pbrc.Record
 
 	result = append(result, &pbrc.Record{Release: &pbd.Release{
