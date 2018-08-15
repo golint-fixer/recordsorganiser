@@ -18,6 +18,7 @@ import (
 	pbgs "github.com/brotherlogic/goserver/proto"
 	pbrc "github.com/brotherlogic/recordcollection/proto"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
+	pbt "github.com/brotherlogic/tracer/proto"
 
 	//Needed to pull in gzip encoding init
 	_ "google.golang.org/grpc/encoding/gzip"
@@ -199,6 +200,7 @@ func main() {
 	case "quota":
 		quotaFlags := flag.NewFlagSet("quota", flag.ExitOnError)
 		var name = quotaFlags.String("name", "", "The name of the location to evaluate")
+		var show = quotaFlags.Bool("show", false, "Show the over quota records")
 
 		if err := quotaFlags.Parse(os.Args[2:]); err == nil {
 			loc, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{Locations: []*pb.Location{&pb.Location{Name: *name}}})
@@ -208,7 +210,8 @@ func main() {
 			}
 
 			quot, err := client.GetQuota(ctx, &pb.QuotaRequest{FolderId: loc.GetLocations()[0].FolderIds[0], IncludeRecords: false})
-			if quot.GetOverQuota() {
+			fmt.Printf("QUOTA = %v and %v\n", quot.GetOverQuota(), len(quot.InstanceId))
+			if quot.GetOverQuota() && *show {
 				fmt.Printf("%v is over quota by %v\n", *name, len(quot.InstanceId))
 				for _, id := range quot.InstanceId {
 					host, port, err := utils.Resolve("recordcollection")
@@ -365,4 +368,5 @@ func main() {
 		}
 	}
 
+	utils.SendTrace(ctx, "OrgCLI", time.Now(), pbt.Milestone_END, "OrgCLI")
 }

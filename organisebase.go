@@ -55,9 +55,9 @@ const (
 	KEY = "github.com/brotherlogic/recordsorganiser/org"
 )
 
-func (s *Server) readOrg() error {
+func (s *Server) readOrg(ctx context.Context) error {
 	org := &pb.Organisation{}
-	data, _, err := s.KSclient.Read(KEY, org)
+	data, _, err := s.KSclient.Read(ctx, KEY, org)
 
 	if err != nil {
 		return err
@@ -66,8 +66,8 @@ func (s *Server) readOrg() error {
 	return nil
 }
 
-func (s *Server) saveOrg() {
-	s.KSclient.Save(KEY, s.org)
+func (s *Server) saveOrg(ctx context.Context) {
+	s.KSclient.Save(ctx, KEY, s.org)
 }
 
 func (discogsBridge prodBridge) GetIP(name string) (string, int) {
@@ -131,9 +131,9 @@ func (s *Server) DoRegister(server *grpc.Server) {
 }
 
 // Mote promotes/demotes this server
-func (s *Server) Mote(master bool) error {
+func (s *Server) Mote(ctx context.Context, master bool) error {
 	if master {
-		err := s.readOrg()
+		err := s.readOrg(ctx)
 		return err
 	}
 

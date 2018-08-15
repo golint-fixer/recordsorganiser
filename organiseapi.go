@@ -26,7 +26,7 @@ func (s *Server) UpdateLocation(ctx context.Context, req *pb.UpdateLocationReque
 		}
 	}
 
-	s.saveOrg()
+	s.saveOrg(ctx)
 	return &pb.UpdateLocationResponse{}, nil
 }
 
@@ -47,7 +47,7 @@ func (s *Server) Locate(ctx context.Context, req *pb.LocateRequest) (*pb.LocateR
 func (s *Server) AddLocation(ctx context.Context, req *pb.AddLocationRequest) (*pb.AddLocationResponse, error) {
 	s.prepareForReorg()
 	s.org.Locations = append(s.org.Locations, req.GetAdd())
-	s.saveOrg()
+	s.saveOrg(ctx)
 
 	_, err := s.organise(s.org)
 
@@ -80,7 +80,7 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 	}
 
 	if req.GetForceReorg() {
-		s.saveOrg()
+		s.saveOrg(ctx)
 	}
 
 	s.LogTrace(ctx, "GetOrganisation", time.Now(), pbt.Milestone_END_FUNCTION)
@@ -171,6 +171,6 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 // AddExtractor adds an extractor
 func (s *Server) AddExtractor(ctx context.Context, req *pb.AddExtractorRequest) (*pb.AddExtractorResponse, error) {
 	s.org.Extractors = append(s.org.Extractors, req.Extractor)
-	s.saveOrg()
+	s.saveOrg(ctx)
 	return &pb.AddExtractorResponse{}, nil
 }
