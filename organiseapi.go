@@ -90,7 +90,6 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 // GetQuota fills out the quota response
 func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaResponse, error) {
 	s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_START_FUNCTION)
-	t := time.Now()
 
 	instanceIds := []int32{}
 
@@ -135,7 +134,6 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 		for _, id := range loc.GetFolderIds() {
 			if id == req.GetFolderId() || (req.Name == loc.Name) {
 				if loc.GetQuota().GetNumOfSlots() > 0 && len(loc.GetReleasesLocation())+count >= int(loc.GetQuota().GetNumOfSlots()) {
-					s.LogFunction("GetQuota-true", t)
 					s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
 					for _, in := range loc.ReleasesLocation {
 						meta, err := s.bridge.getMetadata(&pbgd.Release{InstanceId: in.InstanceId})
@@ -156,14 +154,12 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 					return &pb.QuotaResponse{SpillFolder: loc.SpillFolder, OverQuota: len(instanceIds) > int(loc.GetQuota().GetNumOfSlots()), LocationName: loc.GetName(), InstanceId: instanceIds}, nil
 				}
 
-				s.LogFunction("GetQuota-false", t)
 				s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
 				return &pb.QuotaResponse{OverQuota: false, LocationName: loc.GetName()}, nil
 			}
 		}
 	}
 
-	s.LogFunction("GetQuota-notfound", t)
 	s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
 	return &pb.QuotaResponse{}, status.Error(codes.InvalidArgument, fmt.Sprintf("Unable to locate folder in request (%v)", req.GetFolderId()))
 }
