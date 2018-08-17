@@ -25,7 +25,7 @@ import (
 
 type prodGh struct{}
 
-func (gh *prodGh) alert(r *pb.Location) error {
+func (gh *prodGh) alert(ctx context.Context, r *pb.Location) error {
 	host, port, err := utils.Resolve("githubcard")
 
 	if err != nil {
@@ -38,8 +38,6 @@ func (gh *prodGh) alert(r *pb.Location) error {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
 	client := pbgh.NewGithubClient(conn)
 	_, err = client.AddIssue(ctx, &pbgh.Issue{Title: "Quota Issue", Body: fmt.Sprintf("%v is out of quota", r.GetName()), Service: "recordsorganiser"})
 	return err
@@ -74,13 +72,13 @@ func (discogsBridge prodBridge) GetIP(name string) (string, int) {
 	return discogsBridge.Resolver(name)
 }
 
-func (discogsBridge prodBridge) getMetadata(rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
+func (discogsBridge prodBridge) getMetadata(ctx context.Context, rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
 	ip, port := discogsBridge.GetIP("recordcollection")
 	conn, err2 := grpc.Dial(ip+":"+strconv.Itoa(port), grpc.WithInsecure())
 	if err2 == nil {
 		defer conn.Close()
 		client := pbrc.NewRecordCollectionServiceClient(conn)
-		meta, err3 := client.GetRecords(context.Background(), &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: rel}})
+		meta, err3 := client.GetRecords(ctx, &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: rel}})
 		if err3 == nil && meta != nil && len(meta.Records) == 1 && meta.Records[0].Metadata != nil {
 			return meta.Records[0].Metadata, nil
 		}

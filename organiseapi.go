@@ -65,7 +65,7 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 	num := int32(0)
 
 	for _, rloc := range req.GetLocations() {
-		for _, loc := range s.org.GetLocations() {
+		for _, loc := range s.org.GetLocations(ctx) {
 			if utils.FuzzyMatch(rloc, loc) {
 				if req.ForceReorg {
 					n, err := s.organiseLocation(ctx, loc)
@@ -89,7 +89,7 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 
 // GetQuota fills out the quota response
 func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaResponse, error) {
-	s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_START_FUNCTION)
+	ctx = s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_START_FUNCTION)
 
 	instanceIds := []int32{}
 
@@ -110,7 +110,7 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 		log.Printf("Trying %v", loc.Name)
 		if loc.Name == "Listening Pile" {
 			for _, place := range loc.ReleasesLocation {
-				meta, err := s.bridge.getMetadata(&pbgd.Release{InstanceId: place.InstanceId})
+				meta, err := s.bridge.getMetadata(ctx, &pbgd.Release{InstanceId: place.InstanceId})
 				if err == nil {
 					for _, fid := range folderIds {
 						if meta.GoalFolder == fid {
@@ -134,9 +134,8 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 		for _, id := range loc.GetFolderIds() {
 			if id == req.GetFolderId() || (req.Name == loc.Name) {
 				if loc.GetQuota().GetNumOfSlots() > 0 && len(loc.GetReleasesLocation())+count >= int(loc.GetQuota().GetNumOfSlots()) {
-					s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
 					for _, in := range loc.ReleasesLocation {
-						meta, err := s.bridge.getMetadata(&pbgd.Release{InstanceId: in.InstanceId})
+						meta, err := s.bridge.getMetadata(ctx, &pbgd.Release{InstanceId: in.InstanceId})
 						if err == nil {
 							if meta.Category != pbrc.ReleaseMetadata_STAGED_TO_SELL &&
 								meta.Category != pbrc.ReleaseMetadata_SOLD {
@@ -147,10 +146,11 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 
 					if len(instanceIds) > int(loc.GetQuota().GetNumOfSlots()) {
 						if !loc.GetNoAlert() {
-							s.gh.alert(loc)
+							s.gh.alert(ctx, loc)
 						}
 					}
 
+					s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
 					return &pb.QuotaResponse{SpillFolder: loc.SpillFolder, OverQuota: len(instanceIds) > int(loc.GetQuota().GetNumOfSlots()), LocationName: loc.GetName(), InstanceId: instanceIds}, nil
 				}
 
