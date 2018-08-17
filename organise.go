@@ -25,12 +25,12 @@ type Server struct {
 }
 
 type gh interface {
-	alert(r *pb.Location) error
+	alert(ctx context.Context, r *pb.Location) error
 }
 
 type discogsBridge interface {
 	getReleases(ctx context.Context, folders []int32) ([]*pbrc.Record, error)
-	getMetadata(release *pbd.Release) (*pbrc.ReleaseMetadata, error)
+	getMetadata(ctx context.Context, release *pbd.Release) (*pbrc.ReleaseMetadata, error)
 	moveToFolder(releaseMove *pbs.ReleaseMove)
 	GetIP(string) (string, int)
 }
