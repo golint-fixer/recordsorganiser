@@ -1,8 +1,9 @@
 package main
 
 import (
-	"context"
 	"testing"
+
+	"golang.org/x/net/context"
 
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 )
@@ -132,7 +133,7 @@ func TestUpdateLocation(t *testing.T) {
 
 type testgh struct{}
 
-func (t *testgh) alert(r *pb.Location) error {
+func (t *testgh) alert(ctx context.Context, r *pb.Location) error {
 	return nil
 }
 

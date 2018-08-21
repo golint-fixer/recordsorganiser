@@ -337,6 +337,8 @@ func main() {
 		var alert = updateLocationFlags.Bool("alert", true, "Whether we should alert on this location")
 		var spill = updateLocationFlags.Int("spill", 0, "The spill folder for this location")
 		var slots = updateLocationFlags.Int("slots", 0, "The new number of slots for this location")
+		var optOut = updateLocationFlags.Bool("out_out", false, "To opt this location out of quota alerts.")
+
 		if err := updateLocationFlags.Parse(os.Args[2:]); err == nil {
 			if *folder > 0 {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{FolderIds: []int32{int32(*folder)}}})
@@ -357,6 +359,9 @@ func main() {
 			}
 			if *slots != 0 {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{Slots: int32(*slots)}})
+			}
+			if *optOut {
+				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{OptOutQuotaChecks: true}})
 			}
 		}
 	case "extractor":

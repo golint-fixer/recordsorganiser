@@ -69,6 +69,9 @@ message Location {
 
   // Folder to move to when this is over quota
   int32 spill_folder = 11;
+
+  // Quota Check opt out - if set no alerts on quota
+  bool opt_out_quota_checks = 12;
 }
 
 message Organisation {
