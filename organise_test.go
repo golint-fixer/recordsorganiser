@@ -330,3 +330,19 @@ func TestAddLocationFail(t *testing.T) {
 		t.Errorf("Error on adding location: %v", err)
 	}
 }
+func TestRaiseIssue(t *testing.T) {
+	testServer := getTestServer(".testRaiseIssue")
+	location := &pb.Location{
+		Name:      "TestName",
+		Slots:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+
+	_, err := testServer.AddLocation(context.Background(), &pb.AddLocationRequest{Add: location})
+	if err != nil {
+		t.Errorf("Error on adding location: %v", err)
+	}
+
+	testServer.checkQuota(context.Background())
+}
