@@ -159,7 +159,7 @@ func main() {
 	}
 
 	client := pb.NewOrganiserServiceClient(conn)
-	ctx, cancel := utils.BuildContext("OrgCLI", "OrgCLI", pbgs.ContextType_MEDIUM)
+	ctx, cancel := utils.BuildContext("OrgCLI", "recordsorganiser", pbgs.ContextType_MEDIUM)
 	defer cancel()
 
 	switch os.Args[1] {
