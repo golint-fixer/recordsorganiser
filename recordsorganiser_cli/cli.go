@@ -99,7 +99,35 @@ func getReleaseString(instanceID int32) string {
 	return rel.GetRecords()[0].GetRelease().Title + " [" + strconv.Itoa(int(instanceID)) + "]"
 }
 
-func get(ctx context.Context, client pb.OrganiserServiceClient, name string, force bool, slot int32) {
+func isTwelve(instanceID int32) bool {
+	host, port, err := utils.Resolve("recordcollection")
+	if err != nil {
+		log.Fatalf("Unable to reach collection: %v", err)
+	}
+	conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
+	defer conn.Close()
+
+	if err != nil {
+		log.Fatalf("Unable to dial: %v", err)
+	}
+
+	client := pbrc.NewRecordCollectionServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	rel, err := client.GetRecords(ctx, &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: instanceID}}})
+	if err != nil {
+		log.Fatalf("unable to get record (%v): %v", instanceID, err)
+	}
+	for _, f := range rel.GetRecords()[0].GetRelease().Formats {
+		if f.Name == "LP" || f.Name == "Vinyl" {
+			return true
+		}
+	}
+
+	return false
+}
+
+func get(ctx context.Context, client pb.OrganiserServiceClient, name string, force bool, slot int32, twelves bool) {
 	locs, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{ForceReorg: force, Locations: []*pb.Location{&pb.Location{Name: name}}})
 	if err != nil {
 		log.Fatalf("Error reading locations: %v", err)
@@ -109,7 +137,9 @@ func get(ctx context.Context, client pb.OrganiserServiceClient, name string, for
 		fmt.Printf("%v (%v) -> %v [%v] with %v (%v) %v\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota(), loc.Sort.String(), loc.GetNoAlert(), loc.GetSpillFolder())
 		for j, rloc := range loc.GetReleasesLocation() {
 			if rloc.GetSlot() == slot {
-				fmt.Printf("%v. %v\n", j, getReleaseString(rloc.GetInstanceId()))
+				if !twelves || isTwelve(rloc.GetInstanceId()) {
+					fmt.Printf("%v. %v\n", j, getReleaseString(rloc.GetInstanceId()))
+				}
 			}
 		}
 	}
@@ -170,9 +200,10 @@ func main() {
 		var name = getLocationFlags.String("name", "", "The name of the location")
 		var force = getLocationFlags.Bool("force", false, "Force a reorg")
 		var slot = getLocationFlags.Int("slot", 1, "Slot to view")
+		var twelves = getLocationFlags.Bool("twelves", false, "Just 12 inches")
 
 		if err := getLocationFlags.Parse(os.Args[2:]); err == nil {
-			get(ctx, client, *name, *force, int32(*slot))
+			get(ctx, client, *name, *force, int32(*slot), *twelves)
 		}
 	case "add":
 		addLocationFlags := flag.NewFlagSet("AddLocation", flag.ExitOnError)
