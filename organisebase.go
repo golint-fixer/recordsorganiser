@@ -163,6 +163,19 @@ func (s Server) ReportHealth() bool {
 	return true
 }
 
+func (s *Server) checkOrg(ctx context.Context) {
+	for _, loc := range s.org.GetLocations() {
+		if loc.ReorgTime == 0 {
+			s.RaiseIssue(ctx, "Add reorg time", fmt.Sprintf("Add a reorg time span for %v", loc.GetName()))
+		} else if loc.ReorgTime > 0 {
+			cTime := int64(time.Now().Sub(time.Unix(loc.LastReorg, 0)).Seconds())
+			if cTime > loc.ReorgTime {
+				s.RaiseIssue(ctx, "Reorg", fmt.Sprintf("Please reorg %v", loc.GetName()))
+			}
+		}
+	}
+}
+
 func main() {
 	var quiet = flag.Bool("quiet", true, "Show log output")
 	flag.Parse()
@@ -178,5 +191,6 @@ func main() {
 	server.GoServer.Killme = true
 	server.RegisterServer("recordsorganiser", false)
 	server.RegisterRepeatingTask(server.checkQuota, time.Hour)
+	server.RegisterRepeatingTask(server.checkOrg, time.Hour)
 	server.Serve()
 }

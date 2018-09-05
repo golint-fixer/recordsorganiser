@@ -84,8 +84,6 @@ func (s *Server) organiseLocation(ctx context.Context, c *pb.Location) (int32, e
 			c.ReleasesLocation = append(c.ReleasesLocation, &pb.ReleasePlacement{Slot: int32(slot + 1), Index: int32(i), InstanceId: rinloc.GetRelease().InstanceId})
 		}
 	}
-
-	s.lastOrgTime = time.Now().Sub(t)
 	s.LogTrace(ctx, "organiseLocation", time.Now(), pbt.Milestone_END_FUNCTION)
 	return int32(len(fr)), nil
 }

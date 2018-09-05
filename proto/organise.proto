@@ -80,6 +80,10 @@ message Location {
 
   // Quota Check opt out - if set no alerts on quota
   bool opt_out_quota_checks = 12;
+
+  // Time to include reorgs, if < 0 we don't reorg
+  int64 reorg_time = 13;
+  int64 last_reorg = 14;
 }
 
 message Organisation {
