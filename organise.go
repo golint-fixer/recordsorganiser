@@ -61,7 +61,6 @@ func convert(exs []*pb.LabelExtractor) map[int32]string {
 }
 
 func (s *Server) organiseLocation(ctx context.Context, c *pb.Location) (int32, error) {
-	t := time.Now()
 	ctx = s.LogTrace(ctx, "organiseLocation", time.Now(), pbt.Milestone_START_FUNCTION)
 	s.lastOrgFolder = c.Name
 	fr, err := s.bridge.getReleases(ctx, c.GetFolderIds())
