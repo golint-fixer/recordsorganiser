@@ -21,7 +21,7 @@ func (discogsBridge testBridgeFail) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridgeFail) getMetadata(ctx context.Context, rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
+func (discogsBridge testBridgeFail) getRecord(ctx context.Context, instanceID int32) (*pbrc.Record, error) {
 	return nil, errors.New("Built to fail")
 }
 func (discogsBridge testBridgeFail) getReleases(ctx context.Context, folders []int32) ([]*pbrc.Record, error) {
@@ -40,7 +40,7 @@ func (discogsBridge testBridgePartialFail) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridgePartialFail) getMetadata(ctx context.Context, rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
+func (discogsBridge testBridgePartialFail) getRecord(ctx context.Context, instanceID int32) (*pbrc.Record, error) {
 	return nil, errors.New("Built to fail")
 }
 func (discogsBridge testBridgePartialFail) getReleases(ctx context.Context, olders []int32) ([]*pbrc.Record, error) {
@@ -80,9 +80,9 @@ func (discogsBridge testBridgeCleverFail) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridgeCleverFail) getMetadata(ctx context.Context, rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
+func (discogsBridge testBridgeCleverFail) getRecord(ctx context.Context, instanceID int32) (*pbrc.Record, error) {
 	metadata := &pbrc.ReleaseMetadata{}
-	switch rel.Id {
+	switch instanceID {
 	case 1:
 		metadata.DateAdded = time.Now().Unix()
 	case 2:
@@ -90,7 +90,7 @@ func (discogsBridge testBridgeCleverFail) getMetadata(ctx context.Context, rel *
 	case 3:
 		metadata.DateAdded = time.Now().Unix() + 100
 	}
-	return metadata, nil
+	return &pbrc.Record{Release: &pbd.Release{InstanceId: 12}, Metadata: metadata}, nil
 }
 func (discogsBridge testBridgeCleverFail) getReleases(ctx context.Context, folders []int32) ([]*pbrc.Record, error) {
 	for _, fold := range folders {
@@ -142,9 +142,9 @@ func (discogsBridge testBridge) GetIP(name string) (string, int) {
 	return "", -1
 }
 
-func (discogsBridge testBridge) getMetadata(ctx context.Context, rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
-	metadata := &pbrc.ReleaseMetadata{GoalFolder: 25}
-	switch rel.Id {
+func (discogsBridge testBridge) getRecord(ctx context.Context, instanceID int32) (*pbrc.Record, error) {
+	metadata := &pbrc.ReleaseMetadata{GoalFolder: 25, SpineWidth: 1}
+	switch instanceID {
 	case 1:
 		metadata.DateAdded = time.Now().Unix()
 	case 2:
@@ -152,12 +152,12 @@ func (discogsBridge testBridge) getMetadata(ctx context.Context, rel *pbd.Releas
 	case 3:
 		metadata.DateAdded = time.Now().Unix() + 100
 	}
-	return metadata, nil
+	return &pbrc.Record{Release: &pbd.Release{InstanceId: 12}, Metadata: metadata}, nil
 }
 
-func (discogsBridge testBridgeMove) getMetadata(ctx context.Context, rel *pbd.Release) (*pbrc.ReleaseMetadata, error) {
+func (discogsBridge testBridgeMove) getRecord(ctx context.Context, instanceID int32) (*pbrc.Record, error) {
 	metadata := &pbrc.ReleaseMetadata{GoalFolder: 25}
-	switch rel.Id {
+	switch instanceID {
 	case 1:
 		metadata.DateAdded = time.Now().Unix()
 	case 2:
@@ -165,7 +165,7 @@ func (discogsBridge testBridgeMove) getMetadata(ctx context.Context, rel *pbd.Re
 	case 3:
 		metadata.DateAdded = time.Now().AddDate(0, -4, 0).Unix()
 	}
-	return metadata, nil
+	return &pbrc.Record{Release: &pbd.Release{InstanceId: 12}, Metadata: metadata}, nil
 }
 
 func (discogsBridge testBridge) getReleases(ctx context.Context, folders []int32) ([]*pbrc.Record, error) {
