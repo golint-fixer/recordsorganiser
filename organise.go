@@ -9,7 +9,6 @@ import (
 	"golang.org/x/net/context"
 
 	pbs "github.com/brotherlogic/discogssyncer/server"
-	pbd "github.com/brotherlogic/godiscogs"
 	pbrc "github.com/brotherlogic/recordcollection/proto"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 	pbt "github.com/brotherlogic/tracer/proto"
@@ -31,7 +30,7 @@ type gh interface {
 
 type discogsBridge interface {
 	getReleases(ctx context.Context, folders []int32) ([]*pbrc.Record, error)
-	getMetadata(ctx context.Context, release *pbd.Release) (*pbrc.ReleaseMetadata, error)
+	getRecord(ctx context.Context, instanceID int32) (*pbrc.Record, error)
 	moveToFolder(releaseMove *pbs.ReleaseMove)
 	GetIP(string) (string, int)
 }

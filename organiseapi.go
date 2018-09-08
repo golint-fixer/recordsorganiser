@@ -12,8 +12,6 @@ import (
 	"github.com/brotherlogic/goserver/utils"
 	"github.com/golang/protobuf/proto"
 
-	pbgd "github.com/brotherlogic/godiscogs"
-	pbrc "github.com/brotherlogic/recordcollection/proto"
 	pb "github.com/brotherlogic/recordsorganiser/proto"
 	pbt "github.com/brotherlogic/tracer/proto"
 )
@@ -91,77 +89,55 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaResponse, error) {
 	ctx = s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_START_FUNCTION)
 
-	instanceIds := []int32{}
-
-	folderIds := []int32{}
-	for _, loc := range s.org.GetLocations() {
-		if loc.Name == req.Name {
-			folderIds = append(folderIds, loc.FolderIds...)
+	var loc *pb.Location
+	for _, l := range s.org.GetLocations() {
+		if l.Name == req.Name {
+			loc = l
 		}
-	}
-
-	if len(folderIds) == 0 {
-		folderIds = append(folderIds, req.FolderId)
-	}
-
-	//Compute the count of valid records in the listening pile
-	count := 0
-	for _, loc := range s.org.GetLocations() {
-		log.Printf("Trying %v", loc.Name)
-		if loc.Name == "Listening Pile" {
-			for _, place := range loc.ReleasesLocation {
-				meta, err := s.bridge.getMetadata(ctx, &pbgd.Release{InstanceId: place.InstanceId})
-				if err == nil {
-					for _, fid := range folderIds {
-						if meta.GoalFolder == fid {
-							if meta.Category != pbrc.ReleaseMetadata_UNLISTENED &&
-								meta.Category != pbrc.ReleaseMetadata_STAGED &&
-								meta.Category != pbrc.ReleaseMetadata_STAGED_TO_SELL &&
-								meta.Category != pbrc.ReleaseMetadata_SOLD &&
-								meta.Category != pbrc.ReleaseMetadata_PREPARE_TO_SELL &&
-								meta.Category != pbrc.ReleaseMetadata_PRE_FRESHMAN {
-								instanceIds = append(instanceIds, place.InstanceId)
-								count++
-							}
-						}
-					}
-				}
+		for _, id := range l.FolderIds {
+			if id == req.FolderId {
+				loc = l
 			}
 		}
 	}
 
-	for _, loc := range s.org.GetLocations() {
-		for _, id := range loc.GetFolderIds() {
-			if id == req.GetFolderId() || (req.Name == loc.Name) {
-				if loc.GetQuota().GetNumOfSlots() > 0 && len(loc.GetReleasesLocation())+count >= int(loc.GetQuota().GetNumOfSlots()) {
-					for _, in := range loc.ReleasesLocation {
-						meta, err := s.bridge.getMetadata(ctx, &pbgd.Release{InstanceId: in.InstanceId})
-						if err == nil {
-							if meta.Category != pbrc.ReleaseMetadata_STAGED_TO_SELL &&
-								meta.Category != pbrc.ReleaseMetadata_SOLD {
-								instanceIds = append(instanceIds, in.InstanceId)
-							}
-						}
-					}
+	if loc == nil {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Unable to find folder with name '%v' or id %v", req.Name, req.FolderId))
+	}
 
-					if len(instanceIds) > int(loc.GetQuota().GetNumOfSlots()) {
-						if !loc.GetNoAlert() {
-							s.gh.alert(ctx, loc)
-						}
-					}
+	recs := s.getRecordsForFolder(ctx, loc)
+	instanceIDs := []int32{}
+	for _, r := range recs {
+		log.Printf("R: %v", r)
+		instanceIDs = append(instanceIDs, r.GetRelease().InstanceId)
+	}
 
-					s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
-					return &pb.QuotaResponse{SpillFolder: loc.SpillFolder, OverQuota: len(instanceIds) > int(loc.GetQuota().GetNumOfSlots()), LocationName: loc.GetName(), InstanceId: instanceIds}, nil
-				}
+	//Old style quota
+	if loc.GetQuota() != nil {
+		if loc.GetQuota().NumOfSlots > 0 {
+			s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
+			return &pb.QuotaResponse{OverQuota: len(recs) > int(loc.GetQuota().NumOfSlots), LocationName: loc.GetName(), InstanceId: instanceIDs}, nil
+		}
 
-				s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
-				return &pb.QuotaResponse{OverQuota: false, LocationName: loc.GetName()}, nil
+		//New style quota
+		if loc.GetQuota().GetSlots() > 0 {
+			s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
+			return &pb.QuotaResponse{OverQuota: len(recs) > int(loc.GetQuota().GetSlots()), LocationName: loc.GetName(), InstanceId: instanceIDs}, nil
+		}
+
+		// New Style quota part 2
+		if loc.GetQuota().GetWidth() > 0 {
+			totalWidth := int32(0)
+			for _, r := range recs {
+				totalWidth += r.GetMetadata().SpineWidth
 			}
+			s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
+			return &pb.QuotaResponse{OverQuota: totalWidth > loc.GetQuota().GetWidth(), LocationName: loc.GetName(), InstanceId: instanceIDs}, nil
 		}
 	}
 
 	s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
-	return &pb.QuotaResponse{}, status.Error(codes.InvalidArgument, fmt.Sprintf("Unable to locate folder in request (%v)", req.GetFolderId()))
+	return &pb.QuotaResponse{}, status.Error(codes.InvalidArgument, fmt.Sprintf("No quota specified for location (%v)", loc.GetName()))
 }
 
 // AddExtractor adds an extractor
