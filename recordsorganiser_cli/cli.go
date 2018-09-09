@@ -408,5 +408,5 @@ func main() {
 		}
 	}
 
-	utils.SendTrace(ctx, "OrgCLI", time.Now(), pbt.Milestone_END, "OrgCLI")
+	utils.SendTrace(ctx, "OrgCLI", time.Now(), pbt.Milestone_END, "recordsorganiser")
 }
