@@ -369,6 +369,7 @@ func main() {
 		var spill = updateLocationFlags.Int("spill", 0, "The spill folder for this location")
 		var slots = updateLocationFlags.Int("slots", 0, "The new number of slots for this location")
 		var optOut = updateLocationFlags.Bool("out_out", false, "To opt this location out of quota alerts.")
+		var reorgTime = updateLocationFlags.Int("reorg", 0, "The time needed to do a full reorg.")
 
 		if err := updateLocationFlags.Parse(os.Args[2:]); err == nil {
 			if *folder > 0 {
@@ -393,6 +394,9 @@ func main() {
 			}
 			if *optOut {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{OptOutQuotaChecks: true}})
+			}
+			if *reorgTime > 0 {
+				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{ReorgTime: int64(*reorgTime)}})
 			}
 		}
 	case "extractor":
