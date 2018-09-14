@@ -128,7 +128,9 @@ func (discogsBridge testBridgeCleverFail) moveToFolder(move *pbs.ReleaseMove) {
 	//Do nothing
 }
 
-type testBridge struct{}
+type testBridge struct {
+	widthMissing bool
+}
 
 type testBridgeMove struct {
 	move bool
@@ -144,6 +146,9 @@ func (discogsBridge testBridge) GetIP(name string) (string, int) {
 
 func (discogsBridge testBridge) getRecord(ctx context.Context, instanceID int32) (*pbrc.Record, error) {
 	metadata := &pbrc.ReleaseMetadata{GoalFolder: 25, SpineWidth: 1}
+	if discogsBridge.widthMissing {
+		metadata.SpineWidth = 0
+	}
 	switch instanceID {
 	case 1:
 		metadata.DateAdded = time.Now().Unix()

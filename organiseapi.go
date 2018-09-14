@@ -129,6 +129,10 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 		if loc.GetQuota().GetWidth() > 0 {
 			totalWidth := int32(0)
 			for _, r := range recs {
+				if r.GetMetadata().SpineWidth <= 0 {
+					s.RaiseIssue(ctx, "Missing Spine Width", fmt.Sprintf("Record %v is missing spine width (%v)", r.GetRelease().Title, r.GetRelease().Id))
+					return nil, fmt.Errorf("Unable to compute quota - missing width")
+				}
 				totalWidth += r.GetMetadata().SpineWidth
 			}
 			s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)

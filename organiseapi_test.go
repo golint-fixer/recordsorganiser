@@ -332,6 +332,33 @@ func TestGetOverQuotaNewSlots(t *testing.T) {
 	}
 }
 
+func TestGetOverQuotaNewWidthWithNoWidth(t *testing.T) {
+	testServer := getTestServer(".testQuota")
+	testServer.bridge = &testBridge{widthMissing: true}
+	location := &pb.Location{
+		Name:      "TestName",
+		Slots:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+		Quota:     &pb.Quota{QuotaType: &pb.Quota_Width{Width: 2}},
+	}
+
+	l, err := testServer.AddLocation(context.Background(), &pb.AddLocationRequest{Add: location})
+	if err != nil {
+		t.Fatalf("Error in adding location: %v", err)
+	}
+
+	if len(l.GetNow().GetLocations()[0].GetReleasesLocation()) == 0 {
+		t.Fatalf("No releases at the new location")
+	}
+
+	_, err = testServer.GetQuota(context.Background(), &pb.QuotaRequest{FolderId: 10, IncludeRecords: true})
+
+	if err == nil {
+		t.Fatalf("Error getting quota: %v", err)
+	}
+}
+
 func TestGetOverQuotaNewWidth(t *testing.T) {
 	testServer := getTestServer(".testQuota")
 	location := &pb.Location{
