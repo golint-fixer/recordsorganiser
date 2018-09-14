@@ -116,6 +116,9 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 	if loc.GetQuota() != nil {
 		if loc.GetQuota().NumOfSlots > 0 {
 			s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
+			if len(recs) > int(loc.GetQuota().NumOfSlots) {
+			s.RaiseIssue(ctx, "Quota Problem", fmt.Sprintf("%v is over quota", loc.GetName()))
+			}
 			return &pb.QuotaResponse{OverQuota: len(recs) > int(loc.GetQuota().NumOfSlots), LocationName: loc.GetName(), InstanceId: instanceIDs}, nil
 		}
 
