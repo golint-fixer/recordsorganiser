@@ -117,7 +117,7 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 		if loc.GetQuota().NumOfSlots > 0 {
 			s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
 			if len(recs) > int(loc.GetQuota().NumOfSlots) {
-			s.RaiseIssue(ctx, "Quota Problem", fmt.Sprintf("%v is over quota", loc.GetName()))
+						s.RaiseIssue(ctx, "Quota Problem", fmt.Sprintf("%v is over quota", loc.GetName()))
 			}
 			return &pb.QuotaResponse{OverQuota: len(recs) > int(loc.GetQuota().NumOfSlots), LocationName: loc.GetName(), InstanceId: instanceIDs}, nil
 		}
@@ -125,6 +125,10 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 		//New style quota
 		if loc.GetQuota().GetSlots() > 0 {
 			s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
+						if len(recs) > int(loc.GetQuota().GetSlots()) {
+						s.RaiseIssue(ctx, "Quota Problem", fmt.Sprintf("%v is over quota", loc.GetName()))
+			}
+
 			return &pb.QuotaResponse{OverQuota: len(recs) > int(loc.GetQuota().GetSlots()), LocationName: loc.GetName(), InstanceId: instanceIDs}, nil
 		}
 
@@ -139,6 +143,10 @@ func (s *Server) GetQuota(ctx context.Context, req *pb.QuotaRequest) (*pb.QuotaR
 				totalWidth += r.GetMetadata().SpineWidth
 			}
 			s.LogTrace(ctx, "GetQuota", time.Now(), pbt.Milestone_END_FUNCTION)
+									if totalWidth > loc.GetQuota().GetWidth() {
+						s.RaiseIssue(ctx, "Quota Problem", fmt.Sprintf("%v is over quota", loc.GetName()))
+			}
+
 			return &pb.QuotaResponse{OverQuota: totalWidth > loc.GetQuota().GetWidth(), LocationName: loc.GetName(), InstanceId: instanceIDs}, nil
 		}
 	}
