@@ -90,7 +90,7 @@ func (s *Server) organiseLocation(ctx context.Context, c *pb.Location) (int32, e
 func (s *Server) checkQuota(ctx context.Context) {
 	for _, loc := range s.org.Locations {
 		if loc.GetQuota() == nil && !loc.OptOutQuotaChecks {
-			s.RaiseIssue(ctx, "Need Quota", fmt.Sprintf("%v needs to have some quota", loc.Name))
+			s.RaiseIssue(ctx, "Need Quota", fmt.Sprintf("%v needs to have some quota", loc.Name), false)
 		}
 	}
 }

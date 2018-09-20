@@ -166,11 +166,11 @@ func (s Server) ReportHealth() bool {
 func (s *Server) checkOrg(ctx context.Context) {
 	for _, loc := range s.org.GetLocations() {
 		if loc.ReorgTime == 0 {
-			s.RaiseIssue(ctx, "Add reorg time", fmt.Sprintf("Add a reorg time span for %v", loc.GetName()))
+			s.RaiseIssue(ctx, "Add reorg time", fmt.Sprintf("Add a reorg time span for %v", loc.GetName()), false)
 		} else if loc.ReorgTime > 0 {
 			cTime := int64(time.Now().Sub(time.Unix(loc.LastReorg, 0)).Seconds())
 			if cTime > loc.ReorgTime {
-				s.RaiseIssue(ctx, "Reorg", fmt.Sprintf("Please reorg %v", loc.GetName()))
+				s.RaiseIssue(ctx, "Reorg", fmt.Sprintf("Please reorg %v", loc.GetName()), false)
 			}
 		}
 	}
