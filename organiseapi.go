@@ -72,6 +72,11 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 						return &pb.GetOrganisationResponse{}, err
 					}
 				}
+
+				if req.OrgReset {
+					loc.LastReorg = time.Now().Unix()
+				}
+
 				locations = append(locations, loc)
 			}
 		}

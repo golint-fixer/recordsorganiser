@@ -75,6 +75,39 @@ func TestGetLocation(t *testing.T) {
 		t.Errorf("Bad location response: %v", resp)
 	}
 }
+
+func TestGetLocationReorg(t *testing.T) {
+	testServer := getTestServer(".testAddLocation")
+	location := &pb.Location{
+		Name:      "TestName",
+		Slots:     2,
+		FolderIds: []int32{10},
+		Sort:      pb.Location_BY_LABEL_CATNO,
+	}
+
+	_, err := testServer.AddLocation(context.Background(), &pb.AddLocationRequest{Add: location})
+	if err != nil {
+		t.Fatalf("Unable to add location: %v", err)
+	}
+
+	resp, err := testServer.GetOrganisation(context.Background(), &pb.GetOrganisationRequest{ForceReorg: true, Locations: []*pb.Location{&pb.Location{Name: "TestName"}}})
+	if err != nil {
+		t.Fatalf("Unable to get organisation %v", err)
+	}
+
+	orgTime1 := resp.GetLocations()[0].LastReorg
+
+	resp, err = testServer.GetOrganisation(context.Background(), &pb.GetOrganisationRequest{OrgReset: true, ForceReorg: true, Locations: []*pb.Location{&pb.Location{Name: "TestName"}}})
+	if err != nil {
+		t.Fatalf("Unable to get organisation %v", err)
+	}
+
+	if resp.GetLocations()[0].LastReorg == orgTime1 {
+		t.Errorf("Reorg time not updated!: %v", orgTime1)
+	}
+
+}
+
 func TestGetLocationOrgFail(t *testing.T) {
 	testServer := getTestServer(".testAddLocation")
 	location := &pb.Location{
