@@ -133,12 +133,17 @@ func get(ctx context.Context, client pb.OrganiserServiceClient, name string, for
 		log.Fatalf("Error reading locations: %v", err)
 	}
 
+	lastSlot := int32(1)
 	for _, loc := range locs.GetLocations() {
-		fmt.Printf("%v (%v) -> %v [%v] with %v (%v) %v\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota(), loc.Sort.String(), loc.GetNoAlert(), loc.GetSpillFolder())
+		fmt.Printf("%v (%v) -> %v [%v] with %v (%v) %v [Last reorg: %v]\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota(), loc.Sort.String(), loc.GetNoAlert(), loc.GetSpillFolder(), time.Unix(loc.LastReorg, 0))
 		for j, rloc := range loc.GetReleasesLocation() {
 			if slot < 0 || rloc.GetSlot() == slot {
 				if !twelves || isTwelve(rloc.GetInstanceId()) {
-					fmt.Printf("%v. %v\n", j, getReleaseString(rloc.GetInstanceId()))
+					if rloc.GetSlot() > lastSlot {
+						fmt.Printf("\n")
+						lastSlot = rloc.GetSlot()
+					}
+					fmt.Printf("%v [%v]. %v\n", j, rloc.GetSlot(), getReleaseString(rloc.GetInstanceId()))
 				}
 			}
 		}
