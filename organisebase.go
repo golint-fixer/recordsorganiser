@@ -190,7 +190,7 @@ func main() {
 
 	server.GoServer.Killme = true
 	server.RegisterServer("recordsorganiser", false)
-	server.RegisterRepeatingTask(server.checkQuota, time.Hour)
-	server.RegisterRepeatingTask(server.checkOrg, time.Hour)
+	server.RegisterRepeatingTask(server.checkQuota, "check_quota", time.Hour)
+	server.RegisterRepeatingTask(server.checkOrg, "check_org", time.Hour)
 	server.Serve()
 }

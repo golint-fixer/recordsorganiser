@@ -127,8 +127,8 @@ func isTwelve(instanceID int32) bool {
 	return false
 }
 
-func get(ctx context.Context, client pb.OrganiserServiceClient, name string, force bool, slot int32, twelves bool) {
-	locs, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{ForceReorg: force, Locations: []*pb.Location{&pb.Location{Name: name}}})
+func get(ctx context.Context, client pb.OrganiserServiceClient, name string, force bool, slot int32, twelves bool, reset bool) {
+	locs, err := client.GetOrganisation(ctx, &pb.GetOrganisationRequest{OrgReset: reset, ForceReorg: force, Locations: []*pb.Location{&pb.Location{Name: name}}})
 	if err != nil {
 		log.Fatalf("Error reading locations: %v", err)
 	}
@@ -136,7 +136,7 @@ func get(ctx context.Context, client pb.OrganiserServiceClient, name string, for
 	for _, loc := range locs.GetLocations() {
 		fmt.Printf("%v (%v) -> %v [%v] with %v (%v) %v\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota(), loc.Sort.String(), loc.GetNoAlert(), loc.GetSpillFolder())
 		for j, rloc := range loc.GetReleasesLocation() {
-			if rloc.GetSlot() == slot {
+			if slot < 0 || rloc.GetSlot() == slot {
 				if !twelves || isTwelve(rloc.GetInstanceId()) {
 					fmt.Printf("%v. %v\n", j, getReleaseString(rloc.GetInstanceId()))
 				}
@@ -201,9 +201,10 @@ func main() {
 		var force = getLocationFlags.Bool("force", false, "Force a reorg")
 		var slot = getLocationFlags.Int("slot", 1, "Slot to view")
 		var twelves = getLocationFlags.Bool("twelves", false, "Just 12 inches")
+		var reorg = getLocationFlags.Bool("reorg", false, "Do a full reorg")
 
 		if err := getLocationFlags.Parse(os.Args[2:]); err == nil {
-			get(ctx, client, *name, *force, int32(*slot), *twelves)
+			get(ctx, client, *name, *force, int32(*slot), *twelves, *reorg)
 		}
 	case "add":
 		addLocationFlags := flag.NewFlagSet("AddLocation", flag.ExitOnError)

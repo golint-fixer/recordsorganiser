@@ -110,6 +110,9 @@ message GetOrganisationRequest {
 
   // Force a reorg on returned locations
   bool force_reorg = 2;
+
+  // Reset the reorg time
+  bool org_reset = 3;
 }
 
 message GetOrganisationResponse {
