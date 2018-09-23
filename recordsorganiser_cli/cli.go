@@ -135,7 +135,7 @@ func get(ctx context.Context, client pb.OrganiserServiceClient, name string, for
 
 	lastSlot := int32(1)
 	for _, loc := range locs.GetLocations() {
-		fmt.Printf("%v (%v) -> %v [%v] with %v (%v) %v [Last reorg: %v]\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota(), loc.Sort.String(), loc.GetNoAlert(), loc.GetSpillFolder(), time.Unix(loc.LastReorg, 0))
+		fmt.Printf("%v (%v) -> %v [%v] with %v (%v) %v [Last reorg: %v from %v]\n", loc.GetName(), len(loc.GetReleasesLocation()), loc.GetFolderIds(), loc.GetQuota(), loc.Sort.String(), loc.GetNoAlert(), loc.GetSpillFolder(), time.Unix(loc.LastReorg, 0), loc.ReorgTime)
 		for j, rloc := range loc.GetReleasesLocation() {
 			if slot < 0 || rloc.GetSlot() == slot {
 				if !twelves || isTwelve(rloc.GetInstanceId()) {
@@ -401,7 +401,7 @@ func main() {
 			if *optOut {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{OptOutQuotaChecks: true}})
 			}
-			if *reorgTime > 0 {
+			if *reorgTime != 0 {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{ReorgTime: int64(*reorgTime)}})
 			}
 		}
