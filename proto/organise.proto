@@ -139,6 +139,7 @@ message QuotaResponse {
   int32 spill_folder = 2;
   string location_name = 3;
   repeated int32 instance_id = 4;
+  Quota quota = 5;
 }
 
 message UpdateLocationRequest {

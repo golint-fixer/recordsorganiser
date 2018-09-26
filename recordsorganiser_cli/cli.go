@@ -302,8 +302,7 @@ func main() {
 			}
 
 			records := make([]*pbrc.Record, 0)
-			minScore := int32(6)
-			log.Printf("FOUND %v but %v", len(loc.InstanceId), loc.OverQuota)
+			minScore := float64(6)
 			for _, i := range loc.InstanceId {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 				defer cancel()
@@ -315,23 +314,23 @@ func main() {
 
 				for _, r := range recs.GetRecords() {
 					records = append(records, r)
-					score := r.GetRelease().Rating
+					score := float64(r.GetRelease().Rating)
 					if score == 0 {
-						score = int32(float64(r.GetMetadata().OverallScore))
+						score = float64(r.GetMetadata().OverallScore)
 					}
-					if score > 0 && score < minScore {
+					if score > 0.0 && score < minScore {
 						minScore = score
 					}
 				}
 			}
 
 			if *limit > 0 && int(minScore) < *limit {
-				minScore = int32(*limit)
+				minScore = float64(*limit)
 			}
 
 			fmt.Printf("Checking on %v records with the min score being %v\n", len(records), minScore)
 
-			total := len(records) - 500 + 10
+			total := len(records) - 40 - 5
 			count := 0
 
 			//Sort by release date
@@ -340,11 +339,11 @@ func main() {
 				if count > total {
 					break
 				}
-				score := r.GetRelease().Rating
+				score := float64(r.GetRelease().Rating)
 				if score == 0 {
-					score = int32(float64(r.GetMetadata().OverallScore))
+					score = float64(r.GetMetadata().OverallScore)
 				}
-				if score == minScore {
+				if score <= minScore {
 					count++
 					fmt.Printf("SELL: [%v] %v\n", r.GetRelease().InstanceId, r.GetRelease().Title)
 					if *assess {
