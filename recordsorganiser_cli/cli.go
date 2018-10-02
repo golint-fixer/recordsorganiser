@@ -380,7 +380,7 @@ func main() {
 			if *folder > 0 {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{FolderIds: []int32{int32(*folder)}}})
 			}
-			if *quota > 0 {
+			if *quota != 0 {
 				client.UpdateLocation(ctx, &pb.UpdateLocationRequest{Location: *name, Update: &pb.Location{Quota: &pb.Quota{NumOfSlots: int32(*quota)}}})
 			}
 			if len(*sort) > 0 {
