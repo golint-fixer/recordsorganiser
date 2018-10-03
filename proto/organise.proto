@@ -4,6 +4,14 @@ package proto;
 
 message Empty {}
 
+message SortMapping {
+  int32 instance_id = 1;
+
+  int64 earliest_release_date = 2;
+
+  string title = 3;
+}
+
 message LabelExtractor {
   // The id of the label
   int32 label_id = 1;
@@ -95,6 +103,9 @@ message Organisation {
 
   // The extractors used for sorting
   repeated LabelExtractor extractors = 3;
+
+  // A list of mappings for the releases
+  repeated SortMapping sort_mappings = 4;
 }
 
 message AddLocationRequest {
