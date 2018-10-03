@@ -82,7 +82,7 @@ func (s *Server) organiseLocation(ctx context.Context, c *pb.Location) (int32, e
 	c.ReleasesLocation = []*pb.ReleasePlacement{}
 	for slot, recs := range records {
 		for i, rinloc := range recs {
-			c.ReleasesLocation = append(c.ReleasesLocation, &pb.ReleasePlacement{Slot: int32(slot + 1), Index: int32(i), InstanceId: rinloc.GetRelease().InstanceId})
+			c.ReleasesLocation = append(c.ReleasesLocation, &pb.ReleasePlacement{Slot: int32(slot + 1), Index: int32(i), InstanceId: rinloc.GetRelease().InstanceId, Title: rinloc.GetRelease().Title})
 		}
 	}
 	s.LogTrace(ctx, "organiseLocation", time.Now(), pbt.Milestone_END_FUNCTION)
