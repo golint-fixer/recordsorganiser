@@ -68,35 +68,17 @@ func locateRelease(ctx context.Context, c pb.OrganiserServiceClient, id int32) {
 			for i, r := range location.GetFoundLocation().GetReleasesLocation() {
 				if r.GetInstanceId() == rec.GetRelease().InstanceId {
 					fmt.Printf("Slot %v\n", r.GetSlot())
-					fmt.Printf("%v. %v\n", i-1, getReleaseString(ctx, location.GetFoundLocation().GetReleasesLocation()[i-1].InstanceId))
-					fmt.Printf("%v. %v\n", i, getReleaseString(ctx, location.GetFoundLocation().GetReleasesLocation()[i].InstanceId))
-					fmt.Printf("%v. %v\n", i+1, getReleaseString(ctx, location.GetFoundLocation().GetReleasesLocation()[i+1].InstanceId))
+					fmt.Printf("%v. %v\n", i-1, getReleaseString(location.GetFoundLocation().GetReleasesLocation()[i-1]))
+					fmt.Printf("%v. %v\n", i, getReleaseString(location.GetFoundLocation().GetReleasesLocation()[i]))
+					fmt.Printf("%v. %v\n", i+1, getReleaseString(location.GetFoundLocation().GetReleasesLocation()[i+1]))
 				}
 			}
 		}
 	}
 }
 
-func getReleaseString(ctx context.Context, instanceID int32) string {
-	host, port, err := utils.Resolve("recordcollection")
-	if err != nil {
-		log.Fatalf("Unable to reach collection: %v", err)
-	}
-	conn, err := grpc.Dial(host+":"+strconv.Itoa(int(port)), grpc.WithInsecure())
-	defer conn.Close()
-
-	if err != nil {
-		log.Fatalf("Unable to dial: %v", err)
-	}
-
-	client := pbrc.NewRecordCollectionServiceClient(conn)
-	ctx, cancel := context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-	rel, err := client.GetRecords(ctx, &pbrc.GetRecordsRequest{Filter: &pbrc.Record{Release: &pbgd.Release{InstanceId: instanceID}}})
-	if err != nil {
-		log.Fatalf("unable to get record (%v): %v", instanceID, err)
-	}
-	return rel.GetRecords()[0].GetRelease().Title + " [" + strconv.Itoa(int(instanceID)) + "]"
+func getReleaseString(loc *pb.ReleasePlacement) string {
+	return loc.Title + " [" + strconv.Itoa(int(loc.InstanceId)) + "]"
 }
 
 func isTwelve(ctx context.Context, instanceID int32) bool {
@@ -143,7 +125,7 @@ func get(ctx context.Context, client pb.OrganiserServiceClient, name string, for
 						fmt.Printf("\n")
 						lastSlot = rloc.GetSlot()
 					}
-					fmt.Printf("%v [%v]. %v\n", j, rloc.GetSlot(), getReleaseString(ctx, rloc.GetInstanceId()))
+					fmt.Printf("%v [%v]. %v\n", j, rloc.GetSlot(), getReleaseString(rloc))
 				}
 			}
 		}
