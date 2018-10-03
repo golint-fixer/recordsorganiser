@@ -61,10 +61,22 @@ func (s *Server) readOrg(ctx context.Context) error {
 		return err
 	}
 	s.org = data.(*pb.Organisation)
+
+	// Build out the mapping
+	for _, mapping := range s.org.SortMappings {
+		s.sortMap[mapping.InstanceId] = mapping
+	}
+
 	return nil
 }
 
 func (s *Server) saveOrg(ctx context.Context) {
+	//Unravel the mapping
+	s.org.SortMappings = []*pb.SortMapping{}
+	for _, mapping := range s.sortMap {
+		s.org.SortMappings = append(s.org.SortMappings, mapping)
+	}
+
 	s.KSclient.Save(ctx, KEY, s.org)
 }
 
@@ -143,12 +155,13 @@ func (s Server) GetState() []*pbgs.State {
 	return []*pbgs.State{
 		&pbgs.State{Key: "OrgTime", Text: fmt.Sprintf("%v", s.lastOrgTime)},
 		&pbgs.State{Key: "OrgFold", Text: s.lastOrgFolder},
+		&pbgs.State{Key: "sort_map_size", Value: int64(len(s.sortMap))},
 	}
 }
 
 // InitServer builds an initial server
 func InitServer() *Server {
-	server := &Server{&goserver.GoServer{}, prodBridge{}, &pb.Organisation{}, &prodGh{}, time.Second, ""}
+	server := &Server{&goserver.GoServer{}, prodBridge{}, &pb.Organisation{}, &prodGh{}, time.Second, "", make(map[int32]*pb.SortMapping)}
 	server.PrepServer()
 	server.bridge = &prodBridge{Resolver: server.GetIP}
 	server.GoServer.KSclient = *keystoreclient.GetClient(server.GetIP)
