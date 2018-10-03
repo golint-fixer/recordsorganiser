@@ -69,6 +69,7 @@ func (s *Server) GetOrganisation(ctx context.Context, req *pb.GetOrganisationReq
 					n, err := s.organiseLocation(ctx, loc)
 					num = n
 					if err != nil {
+						s.LogTrace(ctx, "GetOrganisation", time.Now(), pbt.Milestone_END_FUNCTION)
 						return &pb.GetOrganisationResponse{}, err
 					}
 				}

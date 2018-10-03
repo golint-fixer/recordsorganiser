@@ -64,6 +64,7 @@ func (s *Server) organiseLocation(ctx context.Context, c *pb.Location) (int32, e
 	ctx = s.LogTrace(ctx, "organiseLocation", time.Now(), pbt.Milestone_START_FUNCTION)
 	s.lastOrgFolder = c.Name
 	fr, err := s.bridge.getReleases(ctx, c.GetFolderIds())
+
 	if err != nil {
 		return -1, err
 	}
